@@ -91,6 +91,31 @@ lReclass <- function(x=NULL, inValues=NULL){
 }
 
 #
+# calcPatchIssolation()
+# Calculate the KNN distance between patches in a binary raster specified by r=RasterLayer. You can either return the KNN index or some 
+# statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
+#
+# Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
+#
+
+calcPatchIssolation <- function(r, fun=NA, k=1){
+  require(raster)
+  require(sp)
+  require(rgeos)
+  require(FNN)
+  
+  o <- raster::clump(r)
+    o <- raster::rasterToPolygons(o, dissolve=T, na.rm=T) 
+      #o <- rgeos::gUnaryUnion(o)
+        o <- sp::getSpPPolygonsLabptSlots(o)
+  o <- as.vector(FNN::get.knn(o))
+  if(!is.na(fun)){
+    o<-get(fun)(o)
+  }
+  return(o)
+}
+
+#
 # calculateLandscapeMetric()
 # quick wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape 
 # metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the SDMTools package.
