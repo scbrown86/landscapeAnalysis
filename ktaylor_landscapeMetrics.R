@@ -106,12 +106,11 @@ calcPatchIssolation <- function(r, fun=NA, k=1){
   
   o <- raster::clump(r)
     o <- raster::rasterToPolygons(o, dissolve=T, na.rm=T) 
-      #o <- rgeos::gUnaryUnion(o)
-        o <- sp::getSpPPolygonsLabptSlots(o)
-  o <- as.vector(FNN::get.knn(o))
-  if(!is.na(fun)){
-    o<-get(fun)(o)
-  }
+      o <- sp::getSpPPolygonsLabptSlots(o)
+        o <- as.vector(FNN::knn.dist(data=o,k=k))
+  
+  if(!is.na(fun)) o <- match.fun(fun)(o)
+ 
   return(o)
 }
 
