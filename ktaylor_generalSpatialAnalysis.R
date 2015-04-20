@@ -155,7 +155,7 @@ findMinExtent <- function(x, ret=NULL){
 
 #
 # Mode()
-# Find the mode of a raster stack
+# Find the mode of a raster stack. Bagarded from Stack Exchange.
 #
 
 Mode <- function(x) {
