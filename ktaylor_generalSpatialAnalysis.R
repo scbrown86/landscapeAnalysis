@@ -155,13 +155,13 @@ findMinExtent <- function(x, ret=NULL){
 
 #
 # Mode()
-# Find the mode of a raster stack. Bagarded from Stack Exchange.
+# Find the mode of a raster stack. Bogarted from Stack Exchange.
 #
 
 Mode <- function(x) {
-    ux <- unique(x)
-      ux <- ux[!is.na(ux)]
-    return(ux[which.max(tabulate(match(x, ux)))])
+  ux <- unique(x)
+    ux <- ux[!is.na(ux)]
+  return(ux[which.max(tabulate(match(x, ux)))])
 }
 
 #
