@@ -109,7 +109,7 @@ calcPatchIssolation <- function(r, fun=NA, k=1){
       o <- sp::getSpPPolygonsLabptSlots(o)
         o <- as.vector(FNN::knn.dist(data=o,k=k))
   
-  if(!is.na(fun)) o <- match.fun(fun)(o)
+  if(suppressWarnings(!is.na(fun))) o <- match.fun(fun)(o)
  
   return(o)
 }
@@ -122,7 +122,7 @@ calcPatchIssolation <- function(r, fun=NA, k=1){
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
 #
 
-lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=T){
+lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
   require(SDMTools)
@@ -134,11 +134,11 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=T){
     allNa <- unlist(lapply(x, naCheck))
 
   if(sum(allNa)/length(allNa) == 1){
-      if(DEBUG) cat(" -- warning: 100% of buffered samples are NA.  Returning zero for all patch stats.\n")
+      if(DEBUG) warning("100% of buffered samples are NA.  Returning zero for all patch stats.")
       vClass <- vPatch <- rep(0, length(x))
       return(list(vClass, vPatch))
   } else if(sum(allNa)>0){ 
-      if(DEBUG) cat(" -- warning:", (sum(allNa)/length(allNa))*100, "% of the sample buffers are completely NA.  Removing offenders, but it will lower your sample size.\n") 
+      if(DEBUG) warning((sum(allNa)/length(allNa))*100, "% of the sample buffers are completely NA.  Removing offenders, but it will lower your sample size.") 
       x <- x[!allNa]
   }
 
@@ -153,11 +153,17 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=T){
     
     whichMetric <- classStats %in% metric
     if(sum(whichMetric) > 0){
-      for(i in 1:length(t[[1]])){ vClass<-append(vClass,t[[1]][[i]][1,whichMetric]) }
+      for(i in 1:length(t[[1]])){ focal <- t[[1]][[i]][1,whichMetric]; names(focal) <- classStats[whichMetric]; vClass<-append(vClass,focal) }
     }
     whichMetric <- patchStats %in% metric
     if(sum(whichMetric) > 0){
-      for(i in 1:length(t[[2]])){ vPatch<-append(vPatch,t[[2]][[i]][1,whichMetric]) }
+      for(i in 1:length(t[[2]])){ focal <- t[[2]][[i]][1,whichMetric]; names(focal) <- patchStats[whichMetric]; vPatch<-append(vPatch,focal) }
+    }
+    # lastly, are there statistics that were requested which are not a part of SDMTOOLS?
+    if("patch.issolation" %in% metric){
+      focal <- unlist(lapply(x, FUN=calcPatchIssolation, fun=median));
+        names(focal) <- rep("patch.issolation", length(focal))
+      vClass<-append(vClass,focal);
     }
     if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); }
     return(list(vClass,vPatch))
@@ -165,4 +171,15 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=T){
   # return the full table of stats offered, by default
   if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); }
    return(t)
+}
+
+#
+# metricsListToVector()
+# parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
+#
+metricsListToVector <- function(x,metric="total.area"){
+  out <- vector();
+  out <- append(out, as.vector(unlist(x[[1]][which(names(x[[1]]) == metric)])));
+  out <- append(out, as.vector(unlist(x[[2]][which(names(x[[2]]) == metric)])));
+  return(out);
 }
