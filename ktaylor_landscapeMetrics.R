@@ -107,7 +107,12 @@ calcPatchIssolation <- function(r, fun=NA, k=1){
   o <- raster::clump(r)
     o <- raster::rasterToPolygons(o, dissolve=T, na.rm=T) 
       o <- sp::getSpPPolygonsLabptSlots(o)
-        o <- as.vector(FNN::knn.dist(data=o,k=k))
+  
+  if(nrow(o) > k){ # return NA if there are not more than k patches available  
+    o <- as.vector(FNN::knn.dist(data=o,k=k));
+  } else {
+    return(NA);
+  }
   
   if(suppressWarnings(!is.na(fun))) o <- match.fun(fun)(o)
  
