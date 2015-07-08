@@ -33,11 +33,11 @@
 }
 
 #
-# gaussianSmooth()
+# gaussianSmoothing()
 # Implements a gaussian smoothing window as specified and implemented by Jeff Evans [2014] (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
 #
 
-gaussianSmooth <- function(x, s=1, d=5, filename=FALSE, ...) {
+gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
     if (!require(sp)) stop("sp PACKAGE MISSING")
     if (!require(raster)) stop("raster PACKAGE MISSING")
     if (!require(rgdal)) stop("rgdal PACKAGE MISSING")
