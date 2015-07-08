@@ -34,7 +34,7 @@
 
 #
 # spatialSmoothing()
-# Implements a gaussian smoothing window as implemented by Jeff Evans 2014 (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
+# Implements a gaussian smoothing window as specified and implemented by Jeff Evans [2014] (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
 #
 
 spatialSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
