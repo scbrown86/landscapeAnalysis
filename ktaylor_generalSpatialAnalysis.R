@@ -6,6 +6,33 @@
 #
 
 #
+# getPythonPath()
+#
+
+.getPythonPath <- function(){
+  PYTHON <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), FUN=list.files, pattern="python", full.names=T))
+  if(length(PYTHON)>1){ 
+    warning("multiple python binaries found in PATH.  Making a guess as to the default to use.")
+    PYTHON <- PYTHON[grep(PYTHON, pattern="\\/python$")] # should correspond to /usr/bin/python on nix platforms.  This probably breaks win32 compat.
+  } else if(length(PYTHON) == 0){
+    stop("couldn't find a python executable in the user's PATH.")
+  }
+  return(PYTHON)
+}
+
+#
+# getGDALtoolByName()
+#
+.getGDALtoolByName <- function(x=NULL){
+  if(grepl(tolower(x),pattern="gdal_polygonize")){
+    GDAL_POLYGONIZE <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), FUN=list.files, pattern="gdal_polygonize.py", full.names=T))
+      if(length(GDAL_POLYGONIZE)<1) stop("couldn't find gdal_polygonize.py tool in PATH")
+        return(GDAL_POLYGONIZE)
+  }
+  return(NULL)
+}
+
+#
 # cropRasterByPolygons()
 # Accepts a raster and SpatialPolygonDataFrame object, iterates over each polygon feature, creating rasters 
 # for each step.  A raster list is returned to the user. Useful for parsing out climate/elevation data, county-by-county,
