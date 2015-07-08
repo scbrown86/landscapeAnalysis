@@ -33,6 +33,33 @@
 }
 
 #
+# spatialSmoothing()
+# Implements a gaussian smoothing window as implemented by Jeff Evans 2014 (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
+#
+
+spatialSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
+    if (!require(sp)) stop("sp PACKAGE MISSING")
+    if (!require(raster)) stop("raster PACKAGE MISSING")
+    if (!require(rgdal)) stop("rgdal PACKAGE MISSING")
+    if (!inherits(x, "RasterLayer")) stop("MUST BE RasterLayer OBJECT") 
+       GaussianKernel <- function(sigma=s, n=d) {
+          m <- matrix(nc=n, nr=n)
+            col <- rep(1:n, n)
+            row <- rep(1:n, each=n)
+          x <- col - ceiling(n/2)
+          y <- row - ceiling(n/2)
+         m[cbind(row, col)] <- 1/(2*pi*sigma^2) * exp(-(x^2+y^2)/(2*sigma^2))
+        m / sum(m)
+       }
+   if (filename != FALSE) {
+      focal(x, w=GaussianKernel(sigma=s, n=d), filename=filename, ...)
+      print(paste("RASTER WRITTEN TO", filename, sep=": "))
+        } else {
+      return(focal(x, w=GaussianKernel(sigma=s, n=d), ...))
+  }
+}
+
+#
 # cropRasterByPolygons()
 # Accepts a raster and SpatialPolygonDataFrame object, iterates over each polygon feature, creating rasters 
 # for each step.  A raster list is returned to the user. Useful for parsing out climate/elevation data, county-by-county,
