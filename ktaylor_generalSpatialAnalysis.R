@@ -135,7 +135,7 @@ spatialPointsToPPP <- function(x,extentMultiplier=1.1){
   return(x)
 }
 
-csvToSpatialDataFrame <- function(path=NULL){
+csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
   require(sp)
   require(raster)
   # attempt to read-in csv data and convert to SpatialPointsDataFrame
@@ -143,7 +143,7 @@ csvToSpatialDataFrame <- function(path=NULL){
   } else { stop(" -- failed to open input csv.\n") }
 
   coordinates(t) <- ~longitude+latitude
-    projection(t) <- projection("+init=epsg:4326")
+    projection(t) <- projection(proj4string)
       return(t)
 }
 
