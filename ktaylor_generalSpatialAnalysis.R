@@ -58,26 +58,26 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F){
 # accepts a spatial points data frame, converts to PPP data that can be used by spatstat 
 #
 
-spatialPointsToPPP <- function(x,extentMultiplier=1.2){
-	# default includes
-	require(rgdal)
-	require(raster)
-	require(spatstat)
-
+spatialPointsToPPP <- function(x,extentMultiplier=1.1){
+  # default includes
+  require(rgdal)
+  require(raster)
+  require(spatstat)
+  
   e <- extent(x)
-
+  
   if(!is.null(extentMultiplier)) { 
     e@xmin <- e@xmin*extentMultiplier
-    e@xmax <- e@xmax*extentMultiplier
-    e@ymin <- e@ymin*extentMultiplier 
+    e@xmax <- e@xmax+abs(e@xmax*(extentMultiplier-1))
+    e@ymin <- e@ymin-abs(e@ymin*(extentMultiplier-1)) 
     e@ymax <- e@ymax*extentMultiplier
   }
-
+  
   if(class(x) == "SpatialPointsDataFrame"){
     x <- x@coords
-      x <- ppp(x=x[,1], y=x[,2], window=owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
+    x <- ppp(x=x[,1], y=x[,2], window=owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
   } 
-
+  
   return(x)
 }
 
