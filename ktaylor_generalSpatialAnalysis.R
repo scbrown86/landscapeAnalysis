@@ -45,6 +45,8 @@
 # rasterToPolygons()
 # convert a raster to polygons using either 'R' or 'GDAL'.  GDAL is the (faster) default selection
 #
+# Author: Kyle Taylor
+#
 
 rasterToPolygons <- function(r=NULL, method='gdal'){
  if(grepl(method,pattern='gdal')){ 
@@ -57,8 +59,34 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
 }
 
 #
+# extractDensities()
+# extract quantiles from a continuous raster surface as spatial polygons using GDAL
+# 
+# Author: Kyle Taylor (kyle.taylor@pljv.org)
+#
+
+extractDensities <- function(x,s=5,d=15, p=c("0.50","0.90")){
+  # extract  range contours for raster surface x
+  q <- as.character(seq(0.05,0.95,0.05))
+    if(sum(as.character(p) %in% as.character(q)) != length(p)) stop("quantiles are typically extracted in 0.05 interval steps")
+  # smooth
+  smoothed <- SpatialSmoothing(x,s=s)
+    h <- hist(smoothed, plot=F)
+      smoothed[smoothed<=h$mids[2]] <- NA
+        quantiles <- as.vector(quantile(smoothed,probs=as.numeric(q)))
+  out <- list()
+  for(focal in p){
+    smoothed_focal <- smoothed>=quantiles[which(as.character(q) == as.character(focal))]
+      smoothed_focal <- match(smoothed_focal,1,nomatch=NA)
+        out[[length(out)+1]] <- rasterToPolygons(smoothed_focal);
+  }
+  return(out)   
+}
+
+#
 # gaussianSmoothing()
 # Implements a gaussian smoothing window as specified and implemented by Jeff Evans [2014] (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
+# Author: Kyle Taylor (kyle.taylor@pljv.org) [originally J. Evans]
 #
 
 gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
