@@ -4,7 +4,7 @@ This is a work in progress that will eventually be rolled into a formal R packag
 # installation
 ```
 library("devtools")
-install_github("PLJV/landscape-analysis")
+install_github("ktaylora/landscape-analysis")
 ```
 
 # usage
