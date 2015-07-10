@@ -179,6 +179,43 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
 }
 
 #
+# Lextract()
+# takes spatial features (e.g., SpatialPoints) from y= and extracts across a list of raster scenes specified by X=
+# handy for extracting data across the spatial extent of scenes without having to mosaic the rasters into a single surface.
+#
+
+Lextract <- function(X=NULL, y=NULL, fun=mean){
+  output <- NULL    # we don't know how many points will actually overlap our surface -- will assign output values dynamically
+  y$id <- 1:nrow(y) # order our initial point sample by id, so that we can sort effectively later
+  cat(" -- extracting across raster scenes: ")
+  for(x in X){
+    if(nrow(y)>0){ # sanity-check : prevent an attempted extraction with no points
+      y <- spTransform(y, CRS(projection(x)))
+      # extract overlapping features and add to our merged output
+      if(gIntersects(as(extent(x), 'SpatialPolygons'), as(extent(y), 'SpatialPolygons'))){
+         vals <- raster::extract(x, y, sp=F, fun=fun)
+        # keep non-NA values and add them to output spatial feature -- place NA values back in y for the next iteration of the raster list
+        focal <- y[!is.na(vals),]
+          focal@data <- cbind(focal@data,data.frame(val=vals[!is.na(vals)]))
+        y <- y[is.na(vals),]
+        if(is.null(output)){ 
+          output <- focal 
+        } else {
+          output <- rbind(output, spTransform(focal, CRS(projection(output))))
+        }
+      }
+    }; cat(".")
+  }; cat("\n")
+  # merge in the remaining points (with NA extracted values)
+  if(nrow(y)>1){
+    y$val <- rep(NA,nrow(y))
+    output <- rbind(output,y)
+  }
+  # return out output points, sorted by initial $id
+  return(output[order(output$id),])
+}
+
+#
 # metricsListToVector()
 # parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
 #
