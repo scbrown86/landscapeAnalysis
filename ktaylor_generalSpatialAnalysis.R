@@ -5,6 +5,15 @@
 # Here is my swiss army knife -- a bunch of functions that I routinely use in processing spatial data.  
 #
 
+# default includes
+
+.include <- function(x){ 
+  if(!do.call(require,as.list(x))) {
+    install.packages(x, repos=c("http://cran.revolutionanalytics.com","http://cran.us.r-project.org"));
+  }
+  if(!do.call(require,as.list(x))) stop("auto installation of package ",x," failed.\n")
+}
+
 #
 # getPythonPath()
 #
@@ -53,20 +62,20 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
 #
 
 gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
-    if (!require(sp)) stop("sp PACKAGE MISSING")
-    if (!require(raster)) stop("raster PACKAGE MISSING")
-    if (!require(rgdal)) stop("rgdal PACKAGE MISSING")
-    if (!inherits(x, "RasterLayer")) stop("MUST BE RasterLayer OBJECT") 
-       GaussianKernel <- function(sigma=s, n=d) {
-          m <- matrix(nc=n, nr=n)
-            col <- rep(1:n, n)
-            row <- rep(1:n, each=n)
-          x <- col - ceiling(n/2)
-          y <- row - ceiling(n/2)
-         m[cbind(row, col)] <- 1/(2*pi*sigma^2) * exp(-(x^2+y^2)/(2*sigma^2))
-        m / sum(m)
-       }
-   if (filename != FALSE) {
+  .include('sp')
+  .include('raster')
+  .include('rgdal')
+  if (!inherits(x, "RasterLayer")) stop("x= argument expects a raster* object") 
+     GaussianKernel <- function(sigma=s, n=d) {
+        m <- matrix(nc=n, nr=n)
+          col <- rep(1:n, n)
+          row <- rep(1:n, each=n)
+        x <- col - ceiling(n/2)
+        y <- row - ceiling(n/2)
+       m[cbind(row, col)] <- 1/(2*pi*sigma^2) * exp(-(x^2+y^2)/(2*sigma^2))
+      m / sum(m)
+      }
+  if (filename != FALSE) {
       focal(x, w=GaussianKernel(sigma=s, n=d), filename=filename, ...)
       print(paste("RASTER WRITTEN TO", filename, sep=": "))
         } else {
