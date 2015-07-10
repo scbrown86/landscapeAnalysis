@@ -1,4 +1,4 @@
-# landscape-analysis
+# landscapeAnalysis
 This is a work in progress that will eventually be rolled into a formal R package.  The tools should be useful for regional landscape montoring efforts in the Great Plains ecoregion and beyond.  
 
 # installation
