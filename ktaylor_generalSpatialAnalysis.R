@@ -33,6 +33,21 @@
 }
 
 #
+# rasterToPolygons()
+# convert a raster to polygons using either 'R' or 'GDAL'.  GDAL is the (faster) default selection
+#
+
+rasterToPolygons <- function(r=NULL, method='gdal'){
+ if(grepl(method,pattern='gdal')){ 
+   r_name=deparse(substitute(r))
+   writeRaster(r,paste(r_name,"tif",sep="."),overwrite=T);
+   unlink(paste(r_name,c("shp","xml","shx","prj","dbf"),sep="."))
+   system(paste(.getPythonPath(),.getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" "))
+   return(rgdal::readOGR(".",r_name,verbose=F));
+  }
+}
+
+#
 # gaussianSmoothing()
 # Implements a gaussian smoothing window as specified and implemented by Jeff Evans [2014] (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
 #
