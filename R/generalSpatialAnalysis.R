@@ -2,7 +2,9 @@
 # kyle.taylor@pljv.org
 # GIS Programmer/Analyst, Playa Lakes Joint Venture
 #
-# Here is my swiss army knife -- a bunch of functions that I routinely use in processing spatial data.  
+# Here is my swiss army knife -- a bunch of functions that I routinely use in processing spatial data.  When possible, I 
+# try to use calls to GDAL or GRASS to handle raster operations.  A full GIS will usually do these things more quickly than
+# can be done with pure R (for now).  
 #
 
 # default includes
