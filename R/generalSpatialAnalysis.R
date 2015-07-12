@@ -53,8 +53,14 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
    r_name=deparse(substitute(r))
    writeRaster(r,paste(r_name,"tif",sep="."),overwrite=T);
    unlink(paste(r_name,c("shp","xml","shx","prj","dbf"),sep="."))
-   system(paste(.getPythonPath(),.getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" "))
-   return(rgdal::readOGR(".",r_name,verbose=F));
+   if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" ")))){
+     return(rgdal::readOGR(".",r_name,verbose=F));
+   } else {
+     warning("gdal_polygonize error")
+     return(NULL)
+   }
+  } else {
+    return(raster::rasterToPolygons(r, dissolve=T,progress='text'))
   }
 }
 
