@@ -78,14 +78,15 @@ extractDensities <- function(x,s=5,d=15, p=c(0.5,0.9)){
   # extract  range contours for raster surface x
   q <- sprintf("%.2f",as.numeric(seq(0,1,0.05))) 
     if(sum(as.character(p) %in% as.character(q)) != length(p)) stop("quantiles are typically extracted in 0.05 interval steps")
+      q <- as.numeric(q)[!as.numeric(q) %in% c(0,1)]
   # smooth
   smoothed <- gaussianSmoothing(x,s=s)
     h <- hist(smoothed, plot=F)
       smoothed[smoothed<=h$mids[2]] <- NA
-        quantiles <- as.vector(quantile(smoothed,probs=as.numeric(q)))
+        quantiles <- as.vector(quantile(smoothed,probs=q))
   out <- list()
   for(focal in p){
-    smoothed_focal <- smoothed>=quantiles[which(as.character(q) == as.character(focal))]
+    smoothed_focal <- smoothed>=quantiles[which(as.numeric(q) == as.numeric(focal))]
       smoothed_focal <- match(smoothed_focal,1,nomatch=NA)
         out[[length(out)+1]] <- rasterToPolygons(smoothed_focal);
   }
