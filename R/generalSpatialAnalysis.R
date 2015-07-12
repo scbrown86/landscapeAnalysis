@@ -120,8 +120,8 @@ gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
 
 cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F){
 
-  require(raster)
-  require(rgdal)
+  .include(raster)
+  .include(rgdal)
 
   rS <- list()
 
@@ -166,9 +166,9 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F){
 
 spatialPointsToPPP <- function(x,extentMultiplier=1.1){
   # default includes
-  require(rgdal)
-  require(raster)
-  require(spatstat)
+  .include(rgdal)
+  .include(raster)
+  .include(spatstat)
   
   e <- extent(x)
   
@@ -188,8 +188,8 @@ spatialPointsToPPP <- function(x,extentMultiplier=1.1){
 }
 
 csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
-  require(sp)
-  require(raster)
+  .include(sp)
+  .include(raster)
   # attempt to read-in csv data and convert to SpatialPointsDataFrame
   if(file.exists(path)){ t<-read.csv(path); 
   } else { stop(" -- failed to open input csv.\n") }
@@ -206,8 +206,8 @@ csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
 #
 
 clusterReclassify <- function(r,t=NULL, n=3){
-  if(!(require(snow))) stop("snow package not installed.")
-  if(!(require(raster))) stop("raster package not installed.")
+  .include(snow)
+  .include(raster)
   
   # sanity checks
   if(is.null(t)){
@@ -232,9 +232,9 @@ clusterReclassify <- function(r,t=NULL, n=3){
 #
 
 findMinExtent <- function(x, ret=NULL){
-	require(raster)
-	# sanity-check
-	if(!is.list(x)) { cat(" -- error: x= parameter should be a list.\n"); stop(); }
+  .include(raster)
+  # sanity-check
+  if(!is.list(x)) { cat(" -- error: x= parameter should be a list.\n"); stop(); }
   # pre-process: if this is a raster list, let's solve for individual raster extents
   if(class(x[[1]]) == "RasterLayer" || class(x[[1]]) == "SpatialPolygons") {
     if(length(unique(unlist(lapply(x, FUN=projection)))) > 1) { 
@@ -276,7 +276,7 @@ Mode <- function(x) {
 #
 
 findMaxResolution <- function(x) {
-  require(raster)
+  .include(raster)
   # sanity-check
   if(!is.list(x)) { cat(" -- error: x= parameter should be a list of spatial rasters.\n"); stop(); }
   if(length(unique(unlist(lapply(x, FUN=projection)))) > 1) { 
@@ -334,8 +334,8 @@ mergeRasters <- function(x, output=NULL){
 #
 
 clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
-  require(raster)
-  require(snow)
+  .include(raster)
+  .include(snow)
 
   # sanity checks
   if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
@@ -374,9 +374,9 @@ clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
 #
 
 clusterProjectRaster <- function(x, crs=NULL, n=4){
-  require(raster)
-  require(rgdal)
-  require(snow)
+  .include(raster)
+  .include(rgdal)
+  .include(snow)
 
   # sanity checks
   if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
