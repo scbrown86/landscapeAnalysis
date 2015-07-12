@@ -73,9 +73,10 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
 #
 
-extractDensities <- function(x,s=5,d=15, p=c("0.50","0.90")){
+extractDensities <- function(x,s=5,d=15, p=c(0.5,0.9)){
+  p <- paste(as.character(p),"0",sep="")) # force a trailing zero
   # extract  range contours for raster surface x
-  q <- as.character(seq(0.05,0.95,0.05))
+  q <- as.character(seq(0,1,0.05))
     if(sum(as.character(p) %in% as.character(q)) != length(p)) stop("quantiles are typically extracted in 0.05 interval steps")
   # smooth
   smoothed <- gaussianSmoothing(x,s=s)
