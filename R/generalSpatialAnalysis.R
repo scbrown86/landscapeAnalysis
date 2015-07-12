@@ -78,7 +78,7 @@ extractDensities <- function(x,s=5,d=15, p=c("0.50","0.90")){
   q <- as.character(seq(0.05,0.95,0.05))
     if(sum(as.character(p) %in% as.character(q)) != length(p)) stop("quantiles are typically extracted in 0.05 interval steps")
   # smooth
-  smoothed <- SpatialSmoothing(x,s=s)
+  smoothed <- gaussianSmoothing(x,s=s)
     h <- hist(smoothed, plot=F)
       smoothed[smoothed<=h$mids[2]] <- NA
         quantiles <- as.vector(quantile(smoothed,probs=as.numeric(q)))
