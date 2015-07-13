@@ -340,7 +340,8 @@ mergeRasters <- function(x, output=NULL){
 
 #
 # clusterResample()
-# use a snow cluster to reclassify components of a raster series to the minimum extent and maximum resolution of rasters within the series
+# use a snow cluster to reclassify components of a raster series to the minimum extent and maximum resolution of rasters within the series.
+# Useful for making a list of wildly different raster objects stack()able.
 #
 
 clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
