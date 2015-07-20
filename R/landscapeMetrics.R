@@ -7,7 +7,7 @@ require(rgdal)
 
 #
 # spatialPolygonsToHexagonalGrid()
-# Quick wrapper funtion for HexPoints2SpatialPolygons(), because I can never remember the name of 
+# Quick wrapper funtion for HexPoints2SpatialPolygons(), because I can never remember the name of
 # the HexPoints2SpatialPolygons function when I need it.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
@@ -25,19 +25,19 @@ spatialPolygonsToHexagonalGrid <- function(s=NULL,n=NULL){
 
 #
 # subsampleSurface()
-# accepts a RasterLayer (and optional input pts=SpatialPoints object) and either generates a 
+# accepts a RasterLayer (and optional input pts=SpatialPoints object) and either generates a
 # buffered point pattern process across its surface or buffers the pts= data and performs an extraction
 # across the raster surface using those data.  Returns a list containing the extractions.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
 #
 
-subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL, DEBUG=T){
+subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL, DEBUG=F, progress=NULL){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
   require(rgeos)
   # sanity checks
-  if(is.null(x)) { 
+  if(is.null(x)) {
     cat(" -- error: x= parameter is undefined.\n");
     stop()
   } else if(is.null(width)){
@@ -46,10 +46,10 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
   }
   # create a series of points covering the raster surface, x
   if(is.null(pts)){
-    s <- as(extent(x), 'SpatialPolygons') 
+    s <- as(extent(x), 'SpatialPolygons')
       s <- spsample(s, n=n, type=type)
         s <- split(s,f=rep(1:length(s))) # convert to a list
-  } else if(class(pts) == "SpatialPoints") { 
+  } else if(class(pts) == "SpatialPoints") {
     # if the user specified spatial points at runtime, let's use them
     if(!is.na(crs(pts))){
       require(rgdal)
@@ -60,23 +60,23 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
     }
     s <- split(pts,f=rep(1:length(pts)))
   } else {
-    cat(" -- error: unknown input. pts= argument should be SpatialPoints\n"); 
+    cat(" -- error: unknown input. pts= argument should be SpatialPoints\n");
     stop();
   }
-  # convert points to buffers and mask as needed across each buffered point      
+  # convert points to buffers and mask as needed across each buffered point
   s <- lapply(s, FUN=rgeos::gBuffer, width=width)
-    r_s <- lapply(s, FUN=raster::crop, x=x) 
-        s <- mapply(FUN=raster::mask, x=r_s, mask=s); 
+    r_s <- lapply(s, FUN=raster::crop, x=x)
+        s <- mapply(FUN=raster::mask, x=r_s, mask=s);
 
   rm(r_s); gc(verbose=F)
 
-  if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); } 
+  if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); }
   return(s)
 }
 
 #
 # lReclass()
-# accepts a list of rasters and reclasses each raster to a binary surface where 1=focal cover value and 
+# accepts a list of rasters and reclasses each raster to a binary surface where 1=focal cover value and
 # 0=everything else
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
@@ -92,7 +92,7 @@ lReclass <- function(x=NULL, inValues=NULL){
 
 #
 # calcPatchIssolation()
-# Calculate the KNN distance between patches in a binary raster specified by r=RasterLayer. You can either return the KNN index or some 
+# Calculate the KNN distance between patches in a binary raster specified by r=RasterLayer. You can either return the KNN index or some
 # statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
@@ -103,25 +103,25 @@ calcPatchIssolation <- function(r, fun=NA, k=1){
   require(sp)
   require(rgeos)
   require(FNN)
-  
+
   o <- raster::clump(r)
-    o <- raster::rasterToPolygons(o, dissolve=T, na.rm=T) 
+    o <- raster::rasterToPolygons(o, dissolve=T, na.rm=T)
       o <- sp::getSpPPolygonsLabptSlots(o)
-  
-  if(nrow(o) > k){ # return NA if there are not more than k patches available  
+
+  if(nrow(o) > k){ # return NA if there are not more than k patches available
     o <- as.vector(FNN::knn.dist(data=o,k=k));
   } else {
     return(NA);
   }
-  
+
   if(suppressWarnings(!is.na(fun))) o <- match.fun(fun)(o)
- 
+
   return(o)
 }
 
 #
 # calculateLandscapeMetric()
-# quick wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape 
+# quick wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape
 # metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the SDMTools package.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
@@ -135,15 +135,15 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
   if(class(x) != "list") { cat(" -- error: x= object should be a list() of rasters, as returned by subsampleSurface().\n"); stop(); }
 
   # sanity check our buffer raster surfaces for valid data before passing to PatchStats and ClassStats
-  naCheck <- function(x){ sum(values(is.na(x))) == ncell(x) }  
+  naCheck <- function(x){ sum(values(is.na(x))) == ncell(x) }
     allNa <- unlist(lapply(x, naCheck))
 
   if(sum(allNa)/length(allNa) == 1){
       if(DEBUG) warning("100% of buffered samples are NA.  Returning zero for all patch stats.")
       vClass <- vPatch <- rep(0, length(x))
       return(list(vClass, vPatch))
-  } else if(sum(allNa)>0){ 
-      if(DEBUG) warning((sum(allNa)/length(allNa))*100, "% of the sample buffers are completely NA.  Removing offenders, but it will lower your sample size.") 
+  } else if(sum(allNa)>0){
+      if(DEBUG) warning((sum(allNa)/length(allNa))*100, "% of the sample buffers are completely NA.  Removing offenders, but it will lower your sample size.")
       x <- x[!allNa]
   }
 
@@ -155,7 +155,7 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
     classStats <- names(t[[1]][[1]])
     patchStats <- names(t[[2]][[1]])
     vClass <- vPatch <- vector()
-    
+
     whichMetric <- classStats %in% metric
     if(sum(whichMetric) > 0){
       for(i in 1:length(t[[1]])){ focal <- t[[1]][[i]][1,whichMetric]; names(focal) <- classStats[whichMetric]; vClass<-append(vClass,focal) }
@@ -198,8 +198,8 @@ Lextract <- function(X=NULL, y=NULL, fun=mean){
         focal <- y[!is.na(vals),]
           focal@data <- cbind(focal@data,data.frame(val=vals[!is.na(vals)]))
         y <- y[is.na(vals),]
-        if(is.null(output)){ 
-          output <- focal 
+        if(is.null(output)){
+          output <- focal
         } else {
           output <- rbind(output, spTransform(focal, CRS(projection(output))))
         }

@@ -142,8 +142,8 @@ gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
 
 cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F){
 
-  .include(raster)
-  .include(rgdal)
+  .include('raster')
+  .include('rgdal')
 
   rS <- list()
 
@@ -188,9 +188,9 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F){
 
 spatialPointsToPPP <- function(x,extentMultiplier=1.1){
   # default includes
-  .include(rgdal)
-  .include(raster)
-  .include(spatstat)
+  .include('rgdal')
+  .include('raster')
+  .include('spatstat')
 
   e <- extent(x)
 
@@ -210,8 +210,8 @@ spatialPointsToPPP <- function(x,extentMultiplier=1.1){
 }
 
 csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
-  .include(sp)
-  .include(raster)
+  .include('sp')
+  .include('raster')
   # attempt to read-in csv data and convert to SpatialPointsDataFrame
   if(file.exists(path)){ t<-read.csv(path);
   } else { stop(" -- failed to open input csv.\n") }
@@ -228,8 +228,8 @@ csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
 #
 
 clusterReclassify <- function(r,t=NULL, n=3){
-  .include(snow)
-  .include(raster)
+  .include('snow')
+  .include('raster')
 
   # sanity checks
   if(is.null(t)){
@@ -254,7 +254,7 @@ clusterReclassify <- function(r,t=NULL, n=3){
 #
 
 findMinExtent <- function(x, ret=NULL){
-  .include(raster)
+  .include('raster')
   # sanity-check
   if(!is.list(x)) { cat(" -- error: x= parameter should be a list.\n"); stop(); }
   # pre-process: if this is a raster list, let's solve for individual raster extents
@@ -298,7 +298,7 @@ Mode <- function(x) {
 #
 
 findMaxResolution <- function(x) {
-  .include(raster)
+  .include('raster')
   # sanity-check
   if(!is.list(x)) { cat(" -- error: x= parameter should be a list of spatial rasters.\n"); stop(); }
   if(length(unique(unlist(lapply(x, FUN=projection)))) > 1) {
@@ -357,8 +357,8 @@ mergeRasters <- function(x, output=NULL){
 #
 
 clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
-  .include(raster)
-  .include(snow)
+  .include('raster')
+  .include('snow')
 
   # sanity checks
   if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
@@ -397,9 +397,9 @@ clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
 #
 
 clusterProjectRaster <- function(x, crs=NULL, n=4){
-  .include(raster)
-  .include(rgdal)
-  .include(snow)
+  .include('raster')
+  .include('rgdal')
+  .include('snow')
 
   # sanity checks
   if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
