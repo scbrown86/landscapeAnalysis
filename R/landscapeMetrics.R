@@ -32,7 +32,7 @@ spatialPolygonsToHexagonalGrid <- function(s=NULL,n=NULL){
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
 #
 
-subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL, DEBUG=F, progress=NULL){
+subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL, DEBUG=F){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
   require(rgeos)
@@ -82,13 +82,7 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
 #
 
-lReclass <- function(x=NULL, inValues=NULL){
-  for(i in 1:length(x)){ # figure out how to do this with lapply
-    x[[i]] <- x[[i]] %in% inValues
-      x[[i]][x[[i]] == 0] <- NA
-  }
-  return(x)
-}
+lReclass <- function(x=NULL, inValues=NULL) lapply(lapply(x,FUN=raster::match,table=inValues,nomatch=0), FUN=calc, fun=function(x,na.rm=F){x>1})
 
 #
 # calcPatchIssolation()
@@ -179,12 +173,12 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
 }
 
 #
-# Lextract()
+# lExtract()
 # takes spatial features (e.g., SpatialPoints) from y= and extracts across a list of raster scenes specified by X=
 # handy for extracting data across the spatial extent of scenes without having to mosaic the rasters into a single surface.
 #
 
-Lextract <- function(X=NULL, y=NULL, fun=mean){
+lExtract <- function(X=NULL, y=NULL, fun=mean){
   output <- NULL    # we don't know how many points will actually overlap our surface -- will assign output values dynamically
   y$id <- 1:nrow(y) # order our initial point sample by id, so that we can sort effectively later
   cat(" -- extracting across raster scenes: ")
