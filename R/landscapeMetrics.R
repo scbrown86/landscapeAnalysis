@@ -82,7 +82,7 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
 #
 
-lReclass <- function(x=NULL, inValues=NULL) lapply(lapply(x,FUN=raster::match,table=inValues,nomatch=0), FUN=calc, fun=function(x,na.rm=F){x>1})
+lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=raster::match,table=inValues,nomatch=nomatch), FUN=calc, fun=function(x,na.rm=F){x>1})
 
 #
 # calcPatchIssolation()
