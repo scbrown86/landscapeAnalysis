@@ -146,28 +146,7 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
     t <- list(t,lapply(x, PatchStat)) # make a list of lists containing class stats and patch stats
 
   # parse out the requested metrics as vectors and return to user, if requested
-  if(!is.null(metric)){
-    classStats <- names(t[[1]][[1]])
-    patchStats <- names(t[[2]][[1]])
-    vClass <- vPatch <- vector()
-
-    whichMetric <- classStats %in% metric
-    if(sum(whichMetric) > 0){
-      for(i in 1:length(t[[1]])){ focal <- t[[1]][[i]][1,whichMetric]; names(focal) <- classStats[whichMetric]; vClass<-append(vClass,focal) }
-    }
-    whichMetric <- patchStats %in% metric
-    if(sum(whichMetric) > 0){
-      for(i in 1:length(t[[2]])){ focal <- t[[2]][[i]][1,whichMetric]; names(focal) <- patchStats[whichMetric]; vPatch<-append(vPatch,focal) }
-    }
-    # lastly, are there statistics that were requested which are not a part of SDMTOOLS?
-    if("patch.issolation" %in% metric){
-      focal <- unlist(lapply(x, FUN=calcPatchIssolation, fun=median));
-        names(focal) <- rep("patch.issolation", length(focal))
-      vClass<-append(vClass,focal);
-    }
-    if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); }
-    return(list(vClass,vPatch))
-  }
+  if(!is.null(metric)) return(metricsListToVector(t,metric=metric))
   # return the full table of stats offered, by default
   if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); }
    return(t)
