@@ -144,6 +144,7 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
   # calculate patch and class statistics
   t <- lapply(x, ClassStat)
     t <- list(t,lapply(x, PatchStat)) # make a list of lists containing class stats and patch stats
+
   # parse out the requested metrics as vectors and return to user, if requested
   if(!is.null(metric)){
     classStats <- names(t[[1]][[1]])
@@ -213,9 +214,4 @@ lExtract <- function(X=NULL, y=NULL, fun=mean){
 # metricsListToVector()
 # parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
 #
-metricsListToVector <- function(x,metric="total.area"){
-  out <- vector();
-  out <- append(out, as.vector(unlist(x[[1]][which(names(x[[1]]) == metric)])));
-  out <- append(out, as.vector(unlist(x[[2]][which(names(x[[2]]) == metric)])));
-  return(out);
-}
+metricsListToVector <- function(x,metric="total.area") as.vector(unlist(x)[grepl(names(unlist(x)),pattern=metric)])
