@@ -92,14 +92,14 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
 #
 
-calcPatchIssolation <- function(r, fun=NA, k=1){
+calcPatchIssolation <- function(r, fun=NA, k=1, method='gdal'){
   require(raster)
   require(sp)
   require(rgeos)
   require(FNN)
 
   o <- raster::clump(r)
-    o <- raster::rasterToPolygons(o, dissolve=T, na.rm=T)
+    o <- landscapeAnalysis::rasterToPolygons(o, method=method)
       o <- sp::getSpPPolygonsLabptSlots(o)
 
   if(nrow(o) > k){ # return NA if there are not more than k patches available
