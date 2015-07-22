@@ -66,13 +66,19 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
  if(grepl(method,pattern='gdal')){
    r_name=deparse(substitute(r))
      r_name=paste(r_name,sprintf("%.0f", round(as.numeric(runif(n=1,min=0,max=99999)))),sep="_")
-   writeRaster(r,paste(r_name,"tif",sep="."),overwrite=T);
+   raster::writeRaster(r,paste(r_name,"tif",sep="."),overwrite=T);
    unlink(paste(r_name,c("shp","xml","shx","prj","dbf"),sep="."))
    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" ")))==0){
-     return(rgdal::readOGR(".",r_name,verbose=F));
+     if(class(try(s<-rgdal::readOGR(".",r_name,verbose=F))) != "try-error"){
+       return(s);
+     } else {
+       warning("gdal_polygonize error : it's possible we tried to polygonize a raster with only NA values")
+       return(NA)
+     }
+
    } else {
      warning("gdal_polygonize error")
-     return(NULL)
+     return(NA)
    }
   } else {
     return(raster::rasterToPolygons(r, dissolve=T,progress='text'))
