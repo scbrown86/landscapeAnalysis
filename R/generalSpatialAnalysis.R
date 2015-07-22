@@ -65,7 +65,7 @@
 rasterToPolygons <- function(r=NULL, method='gdal'){
  if(grepl(method,pattern='gdal')){
    r_name=deparse(substitute(r))
-     r_name=paste(r_name,sprintf("%.0f", round(as.numeric(runif(n=1,min=0,max=9999)))),sep="_")
+     r_name=paste(r_name,sprintf("%.0f", round(as.numeric(runif(n=1,min=0,max=99999)))),sep="_")
    writeRaster(r,paste(r_name,"tif",sep="."),overwrite=T);
    unlink(paste(r_name,c("shp","xml","shx","prj","dbf"),sep="."))
    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" ")))==0){
