@@ -85,32 +85,36 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
 lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=raster::match,table=inValues,nomatch=nomatch), FUN=calc, fun=function(x,na.rm=F){x>=1})
 
 #
-# calcPatchIssolation()
+# calcPatchIsolation()
 # Calculate the KNN distance between patches in a binary raster specified by r=RasterLayer. You can either return the KNN index or some
 # statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
 #
 
-calcPatchIssolation <- function(r, fun=NA, k=1, method='gdal'){
-  require(raster)
-  require(sp)
-  require(rgeos)
-  require(FNN)
+calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
+  .include('raster')
+  .include('sp')
+  .include('rgeos')
+  .include('FNN')
 
-  o <- raster::clump(r)
-    o <- landscapeAnalysis::rasterToPolygons(o, method=method)
-      o <- sp::getSpPPolygonsLabptSlots(o)
+  # check for NA values
+  na_values<-as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
+  if(sum(na_values)>0){
+    r[na_values] <- r[which(!na_values)[1]] # overwrite our NA values with something valid
+      r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
 
-  if(nrow(o) > k){ # return NA if there are not more than k patches available
-    o <- as.vector(FNN::knn.dist(data=o,k=k));
   } else {
-    return(NA);
+    r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
   }
+  # do our NN assessment
+  d <- function(x,na.rm=F){ o<-try(FNN::knn.dist(x,k=1)); if(class(o) != "try-error") { x <- o; } else { x[[i]] <- NA }; return(x)}
+  r <- lapply(as.list(r),FUN=d);rm(d);
+    r <- lapply(as.list(r), FUN=ifelse(is.na(fun),mean,match.fun(fun)))
+      r[na_values] <- NA # restore our NA values
 
-  if(suppressWarnings(!is.na(fun))) o <- match.fun(fun)(o)
-
-  return(o)
+  isolation <- as.vector(unlist(buffers_3.3km))
+  return(isolation)
 }
 
 #
