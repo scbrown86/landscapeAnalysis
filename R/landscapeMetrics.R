@@ -93,13 +93,13 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 #
 
 calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
-  .include('raster')
-  .include('sp')
-  .include('rgeos')
-  .include('FNN')
+  .include('raster');
+  .include('sp');
+  .include('rgeos');
+  .include('FNN');
   .include('parallel');
   # set-up our cluster
-  cl <- makeCluster(getOption("cl.cores", 7),outfile='outfile.log')
+  cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1))
   # convert our raster to polygons
   parLapply(cl=cl,as.list(r),fun=landscapeAnalysis::rasterToPolygons,method=method)
   # check for NA values
@@ -115,6 +115,8 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
   r <- lapply(as.list(r),FUN=d);rm(d);
     r <- lapply(as.list(r), FUN=ifelse(is.na(fun),mean,match.fun(fun)))
       r[na_values] <- NA # restore our NA values
+  # clean-up
+  endCluster(cl);
   # return the issolation metric for each raster as a vector
   return(as.vector(unlist(r)))
 }
