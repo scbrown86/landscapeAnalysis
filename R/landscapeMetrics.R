@@ -88,6 +88,8 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 # calcPatchIsolation()
 # Calculate the KNN distance between patches in a binary raster (or raster(s); a vector or list) specified by r=RasterLayer.
 # You can either return the KNN index or some statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
+# I have added multi-core support and use the gdal backend by default for this analysis. It's much faster than doing it the old-school
+# in pure 'R'.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
 #
@@ -111,12 +113,12 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
     r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
   }
   # do our NN assessment
-  d <- function(x,na.rm=F){ o<-try(FNN::knn.dist(x,k=1)); if(class(o) != "try-error") { x <- o; } else { x[[i]] <- NA }; return(x)}
+  d <- function(x,na.rm=F){ o<-try(FNN::knn.dist(x,k=k)); if(class(o) != "try-error") { x <- o; } else { x[[i]] <- NA }; return(x)}
   r <- lapply(as.list(r),FUN=d);rm(d);
     r <- lapply(as.list(r), FUN=ifelse(is.na(fun),mean,match.fun(fun)))
       r[na_values] <- NA # restore our NA values
   # clean-up
-  endCluster(cl);
+  stopCluster(cl);
   # return the issolation metric for each raster as a vector
   return(as.vector(unlist(r)))
 }
