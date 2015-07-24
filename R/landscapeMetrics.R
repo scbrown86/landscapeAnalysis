@@ -97,6 +97,11 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
   .include('sp')
   .include('rgeos')
   .include('FNN')
+  .include('parallel');
+  # set-up our cluster
+  cl <- makeCluster(getOption("cl.cores", 7),outfile='outfile.log')
+  # convert our raster to polygons
+  parLapply(cl=cl,r,fun=landscapeAnalysis::rasterToPolygons,method=method)
   # check for NA values
   na_values <- as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
   if(sum(na_values)>0){
@@ -110,9 +115,8 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
   r <- lapply(as.list(r),FUN=d);rm(d);
     r <- lapply(as.list(r), FUN=ifelse(is.na(fun),mean,match.fun(fun)))
       r[na_values] <- NA # restore our NA values
-
-  isolation <- as.vector(unlist(buffers_3.3km))
-  return(isolation)
+  # return the issolation metric for each raster as a vector
+  return(as.vector(unlist(r)))
 }
 
 #
