@@ -101,7 +101,7 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
   # set-up our cluster
   cl <- makeCluster(getOption("cl.cores", 7),outfile='outfile.log')
   # convert our raster to polygons
-  parLapply(cl=cl,r,fun=landscapeAnalysis::rasterToPolygons,method=method)
+  parLapply(cl=cl,as.list(r),fun=landscapeAnalysis::rasterToPolygons,method=method)
   # check for NA values
   na_values <- as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
   if(sum(na_values)>0){
