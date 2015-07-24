@@ -86,8 +86,8 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 
 #
 # calcPatchIsolation()
-# Calculate the KNN distance between patches in a binary raster specified by r=RasterLayer. You can either return the KNN index or some
-# statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
+# Calculate the KNN distance between patches in a binary raster (or raster(s); a vector or list) specified by r=RasterLayer.
+# You can either return the KNN index or some statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
 #
@@ -97,13 +97,11 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
   .include('sp')
   .include('rgeos')
   .include('FNN')
-
   # check for NA values
-  na_values<-as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
+  na_values <- as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
   if(sum(na_values)>0){
     r[na_values] <- r[which(!na_values)[1]] # overwrite our NA values with something valid
       r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
-
   } else {
     r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
   }
