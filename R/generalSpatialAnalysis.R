@@ -108,8 +108,8 @@ extractDensities <- function(x,s=5,d=15, p=c(0.5,0.9)){
   out <- list()
   for(focal in p){
     smoothed_focal <- smoothed>=quantiles[which(as.numeric(q) == as.numeric(focal))]
-      smoothed_focal <- match(smoothed_focal,1,nomatch=NA)
-        out[[length(out)+1]] <- rasterToPolygons(smoothed_focal);
+      smoothed_focal <- raster::match(smoothed_focal,1,nomatch=NA)
+        out[[length(out)+1]] <- landscapeAnalysis::rasterToPolygons(smoothed_focal);
   }
   return(out)
 }
@@ -299,7 +299,7 @@ findMinExtent <- function(x, ret=NULL){
 Mode <- function(x) {
   ux <- unique(x)
     ux <- ux[!is.na(ux)]
-  return(ux[which.max(tabulate(match(x, ux)))])
+  return(ux[which.max(tabulate(raster::match(x, ux)))])
 }
 
 #
