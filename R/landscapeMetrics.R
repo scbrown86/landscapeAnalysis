@@ -88,22 +88,25 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 # calcPatchIsolation()
 # Calculate the KNN distance between patches in a binary raster (or raster(s); a vector or list) specified by r=RasterLayer.
 # You can either return the KNN index or some statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
-# I have added multi-core support and use the gdal backend by default for this analysis. It's much faster than doing it the old-school
-# in pure 'R'.
+# I have added multi-core support and use the gdal backend by default for this analysis. It's much faster than doing it in pure 'R'.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
 #
 
-calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
+calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
   .include('raster');
   .include('sp');
   .include('rgeos');
   .include('FNN');
   .include('parallel');
   # set-up our cluster
-  cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1))
+  if(parallel) cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1))
   # convert our raster to polygons
-  parLapply(cl=cl,as.list(r),fun=landscapeAnalysis::rasterToPolygons,method=method)
+  if(parallel){
+    parLapply(cl=cl,as.list(r),fun=landscapeAnalysis::rasterToPolygons,method=method)
+  } else {
+    lapply(as.list(r),FUN=landscapeAnalysis::rasterToPolygons,method=method)
+  }
   # check for NA values
   na_values <- as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
   if(sum(na_values)>0){
@@ -118,7 +121,7 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal'){
     r <- lapply(as.list(r), FUN=ifelse(is.na(fun),mean,match.fun(fun)))
       r[na_values] <- NA # restore our NA values
   # clean-up
-  stopCluster(cl);
+  if(parallel) stopCluster(cl);
   # return the issolation metric for each raster as a vector
   return(as.vector(unlist(r)))
 }

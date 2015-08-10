@@ -231,7 +231,8 @@ csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
 #
 # clusterReclassify()
 # stub function to reclassify a raster using snow.  Note, even on machines that have -gt 3 cores,
-# subs doesn't usually benefit from including them in the cluster.
+# subs doesn't usually benefit from including them in the cluster.  Might try reimplementing in GDAL
+# or splitting a raster into pieces and reclassifying using 'parallel'.
 #
 
 clusterReclassify <- function(r,t=NULL, n=3){
