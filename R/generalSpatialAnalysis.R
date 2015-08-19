@@ -177,9 +177,9 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
       }
     }
   }
-  s <- spTransform(s, CRS(projection(r))) # are we working with matching projections?
+  s <- sp::spTransform(s, CRS(projection(r))) # are we working with matching projections?
     r <- raster::crop(r,s)
-      s <- split(s, f=1:nrow(s)) # split to list by row for apply operations
+      s <- sp::split(s, f=1:nrow(s)) # split to list by row for apply operations
   # don't try to parallelize with a large number of polygons unless you are on a system with a whole lot of RAM
   if(parallel){
     .include('parallel');
