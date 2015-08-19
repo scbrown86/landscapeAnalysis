@@ -116,7 +116,7 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
     r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
   }
   # do our NN assessment
-  d <- function(x,na.rm=F){ o<-try(FNN::knn.dist(x,k=k)); if(class(o) != "try-error") { x <- o; } else { x[[i]] <- NA }; return(x)}
+  d <- function(x,na.rm=F){ o<-try(FNN::knn.dist(x,k=k)); if(class(o) != "try-error") { x <- o; } else { x <- NA }; return(x)}
   r <- lapply(as.list(r),FUN=d);rm(d);
     r <- lapply(as.list(r), FUN=ifelse(is.na(fun),mean,match.fun(fun)))
       r[na_values] <- NA # restore our NA values
