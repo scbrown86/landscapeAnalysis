@@ -182,16 +182,16 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
       s <- split(s, f=1:nrow(s)) # split to list by row for apply operations
   # don't try to parallelize with a large number of polygons unless you are on a system with a whole lot of RAM
   if(parallel){
-    .include(parallel);
+    .include('parallel');
     cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1),outfile='outfile.log');
      r <- parLapply(cl=cl,Y=s,fun=raster::crop,X=rep(list(r),length(s)))
       rS <- parLapply(cl=cl,Y=s,fun=raster::mask,x=focal)
   } else {
     for(i in 1:length(s)) {
-      focal <- crop(r,s[i,]);
-        focal <- mask(focal,s[i,]);
+      focal <- crop(r,s[[i]]);
+        focal <- mask(focal,s[[i]]);
       if(write){
-        writeRaster(focal,as.character(s[i,]@data[,field]),format="GTiff");
+        writeRaster(focal,as.character(s[[i]]@data[,field]),format="GTiff");
       } else {
         rS[[length(rS)+1]] <- focal
       }
