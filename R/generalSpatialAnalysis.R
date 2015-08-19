@@ -64,11 +64,11 @@
 
 rasterToPolygons <- function(r=NULL, method='gdal'){
 
- cleanUp <- function(n,all=F){
-   if(all) {
+ cleanUp <- function(n,rmAll=F){
+   if(rmAll) {
      unlink(paste(n,c("shp","xml","shx","prj","dbf","tif"),sep="."),force=T,recursive=T)
    } else {
-     unlink(paste(n,c("shp","xml","shx","prj","dbf","tif"), sep="."),force=T,recursive=T)
+     unlink(paste(n,c("shp","xml","shx","prj","dbf"), sep="."),force=T,recursive=T)
    }
  }
 
@@ -79,7 +79,7 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
    cleanUp(r_name)
    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" ")))==0){
      if(class(try(s<-rgdal::readOGR(".",r_name,verbose=F))) != "try-error"){
-       cleanUp(r_name,all=T)
+       cleanUp(r_name,rmAll=T)
        return(s);
      } else {
        warning("gdal_polygonize error : it's possible we tried to polygonize a raster with only NA values")
@@ -157,7 +157,7 @@ gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
 # for an entire state and then processing with the parallel package.
 #
 
-cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F){
+cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F){
 
   .include('raster')
   .include('rgdal')
@@ -177,22 +177,28 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F){
       }
     }
   }
-  s <- spTransform(s, CRS(projection(r))) # are we working with matching projections
-
-  # pre-crop our raster to the extent of our shapefile
-  r <- raster::crop(r,s)
-
-  for(i in 1:nrow(s)) {
-    focal <- crop(r,s[i,]);
-      focal <- mask(focal,s[i,]);
-    if(write){
-      writeRaster(focal,as.character(s[i,]@data[,field]),format="GTiff");
-    } else {
-      rS[[length(rS)+1]] <- focal
+  s <- spTransform(s, CRS(projection(r))) # are we working with matching projections?
+    r <- raster::crop(r,s)
+      s <- split(s, f=1:nrow(s)) # split to list by row for apply operations
+  # don't try to parallelize with a large number of polygons unless you are on a system with a whole lot of RAM
+  if(parallel){
+    .include(parallel);
+    cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1),outfile='outfile.log');
+     r <- parLapply(cl=cl,Y=s,fun=raster::crop,X=rep(list(r),length(s)))
+      rS <- parLapply(cl=cl,Y=s,fun=raster::mask,x=focal)
+  } else {
+    for(i in 1:length(s)) {
+      focal <- crop(r,s[i,]);
+        focal <- mask(focal,s[i,]);
+      if(write){
+        writeRaster(focal,as.character(s[i,]@data[,field]),format="GTiff");
+      } else {
+        rS[[length(rS)+1]] <- focal
+      }
+      cat(".");
     }
-    cat(".");
+    cat("\n");
   }
-  cat("\n");
 
   # return the raster stack to the user, if asked
   if(!write) { return(rS) }
