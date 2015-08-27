@@ -206,4 +206,8 @@ lExtract <- function(X=NULL, y=NULL, fun=mean){
 # metricsListToVector()
 # parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
 #
-metricsListToVector <- function(x,metric="total.area") as.vector(unlist(x)[grepl(names(unlist(x)),pattern=metric)])
+metricsListToVector <- function(x,metric="total.area") { 
+  ret <- as.vector(unlist(x)[grepl(names(unlist(x)),pattern=metric)])
+    ret[is.na(ret)] <- 0;
+      return(ret);
+}
