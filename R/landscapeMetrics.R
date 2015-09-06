@@ -159,7 +159,12 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
     t <- list(t,lapply(x, PatchStat)) # make a list of lists containing class stats and patch stats
 
   # parse out the requested metrics as vectors and return to user, if requested
-  if(!is.null(metric)) return(lapply(as.list(metric), FUN=metricsListToVector, x=t))
+  if(!is.null(metric)) {
+    t <- lapply(as.list(metric), FUN=metricsListToVector, x=t)
+      t <- data.frame(do.call(cbind,t))
+        names(t) <- metric
+          t <- cbind(id=which(as.logical(!allNa)),t)
+  }
   # return the full table of stats offered, by default
   if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); }
    return(t)
