@@ -166,6 +166,11 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
       t <- data.frame(do.call(cbind,t))
         names(t) <- metric
           t <- cbind(id=which(as.logical(!allNa)),t)
+          t_na <- data.frame(matrix(ncol=(length(metric)+1),rep(0,sum(allNa)*(length(metric)+1))))
+            names(t_na) <- names(t)
+              t_na$id <- which(as.logical(allNa))
+                t <- rbind(t,t_na)
+                  t <- t[order(t$id),]
   }
   # return the full table of stats offered, by default
   if(DEBUG){ cat(" -- debug (elapsed time): ", Sys.time()-t1, "\n"); }
