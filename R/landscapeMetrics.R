@@ -150,7 +150,7 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
       vClass <- vPatch <- rep(0, length(x))
         t <- data.frame(do.call(cbind,list(vClass,vPatch)))
           names(t) <- metric
-           return(t)
+           return(cbind(id=1:length(x),t))
   } else if(sum(allNa)>0){
       if(DEBUG) warning((sum(allNa)/length(allNa))*100, "% of the sample buffers are completely NA.  Removing offenders, but it will lower your sample size.")
       x <- x[!allNa]
