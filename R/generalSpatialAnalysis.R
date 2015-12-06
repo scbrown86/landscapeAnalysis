@@ -209,7 +209,7 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
 # accepts a spatial points data frame, converts to PPP data that can be used by spatstat
 #
 
-spatialPointsToPPP <- function(x,extentMultiplier=1.1){
+spatialPointsToPPP <- function(x,extentMultiplier=1.1,field=NULL){
   e <- extent(x)
 
   if(!is.null(extentMultiplier)) {
@@ -218,13 +218,18 @@ spatialPointsToPPP <- function(x,extentMultiplier=1.1){
     e@ymin <- e@ymin-abs(e@ymin*(extentMultiplier-1))
     e@ymax <- e@ymax*extentMultiplier
   }
-  # attribute 'data' to 'marks' for our PPP 
+  # attribute 'data' to 'marks' for our PPP
   if(grepl(class(x),pattern="SpatialPoints")){
-    x <- x@coords
+    d <- x@data
+    c <- x@coords
     if(grepl(class(x),pattern="SpatialPointsDataFrame")){
-      x <- ppp(x=x[,1], y=x[,2], window=owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)), marks=x@data)
+      if(!is.null(field)){
+        x <- ppp(x=c[,1], y=c[,2], window=owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)), marks=d[,field])
+      } else {
+        x <- ppp(x=c[,1], y=c[,2], window=owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)), marks=d)
+      }
     } else {
-      x <- ppp(x=x[,1], y=x[,2], window=owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
+      x <- ppp(x=c[,1], y=c[,2], window=owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
     }
   }
   return(x)
