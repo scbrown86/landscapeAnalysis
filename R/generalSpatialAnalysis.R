@@ -410,7 +410,9 @@ clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
       return(NULL)
     }
   }
-
+  # snap rasters in our list for consistency
+  e <- lapply(x,FUN=alignExtent,x[[1]])
+    for(i in 1:length(x)){ extent(x[[i]]) <- e[[i]] }
   # build a snow cluster
   endCluster();
     beginCluster(n=n);
@@ -418,6 +420,8 @@ clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
   if(is.null(extent) || is.null(resolution)){
     extent <- findMinExtent(x)
        res <- findMaxResolution(x)
+  } else {
+    res <- resolution
   }
 
   # build a target raster surface to house our reclassified raster data
