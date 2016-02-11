@@ -204,23 +204,23 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
   if(!write) { return(rS) }
 }
 
-#
-# as.owin()
-# Accepts a Spatial* object, extracts its extent, and returns a window
-# that can be used by spatstats.
-#
+  multiplyExtent <- function(x,extentMultiplier=1.1){
+    e <- extent(x)
 
-as.owin <- function(x,extentMultiplier=1.1){
-  e <- extent(x)
+    if(!is.null(extentMultiplier)) {
+      e@xmin <- e@xmin*extentMultiplier
+      e@xmax <- e@xmax+abs(e@xmax*(extentMultiplier-1))
+      e@ymin <- e@ymin-abs(e@ymin*(extentMultiplier-1))
+      e@ymax <- e@ymax*extentMultiplier
+    }
 
-  if(!is.null(extentMultiplier)) {
-    e@xmin <- e@xmin*extentMultiplier
-    e@xmax <- e@xmax+abs(e@xmax*(extentMultiplier-1))
-    e@ymin <- e@ymin-abs(e@ymin*(extentMultiplier-1))
-    e@ymax <- e@ymax*extentMultiplier
+    return(e)
   }
-  return(owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
-}
+
+  as.owin <- function(x,extentMultiplier=1.1){
+    e <- multiplyExtent(x,extentMultiplier=extentMultiplier)
+    return(owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
+  }
 
 #
 # spatialPointsToPPP()
