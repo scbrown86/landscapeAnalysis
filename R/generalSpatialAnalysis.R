@@ -170,7 +170,7 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
   }
 
   # check our polygon data and projections
-  if(class(s) == "SpatialPolygonsDataFrame"){
+  if(grepl(class(s),pattern="SpatialPolygonsDataFrame")){
     if(!is.null(field)){
       if(sum(field %in% colnames(s@data)) == 0){
         cat(" -- error: field", field, "not found in shapefile.\n",sep=" "); stop();
@@ -312,7 +312,7 @@ findMinExtent <- function(x, ret=NULL){
   	return(min)
   } else if(ret == "SpatialPolygons"){ # should we return minimum extent as a spatial polygons object?
       min <- as(min, 'SpatialPolygons')
-      if(is.na(projection(min))){ projection(min) <- projection("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") }
+      if(is.na(projection(min))){ projection(min) <- projection(x[[1]]) }
       return(min)
   } else { stop(" -- unknown ret= parameter specification.") }
 
