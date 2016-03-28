@@ -330,10 +330,11 @@ Mode <- function(x) {
 }
 
 #
-# spatialLinesToSpatialPolygons()
-#
+# spatialLinesGridToSpatialPolygons()
+# accepts an x=SpatialLines* object and converts to polygons.  Useful for generating samples within national grid units.
+# 
 
-spatialLinesToSpatialPolygons <- function(x, res=1000,method="raster"){
+spatialLinesGridToSpatialPolygons <- function(x, res=1000,method="raster"){
   .include('maptools')
   .include('raster')
   if(!inherits(x,'SpatialLines')) stop("x= argument is not of type SpatialLines*")
