@@ -330,6 +330,30 @@ Mode <- function(x) {
 }
 
 #
+# spatialLinesToSpatialPolygons()
+#
+
+spatialLinesToSpatialPolygons <- function(x, res=1000,method="raster"){
+  .include('maptools')
+  .include('raster')
+  if(!inherits(x,'SpatialLines')) stop("x= argument is not of type SpatialLines*")
+  # convert to an arbitrary CRS with metric units and decent consistency across North America for maptools::SpatialLinesMidPoints() 
+  originalCRS <- raster::CRS(raster::projection(x))
+  x <- spTransform(x,CRS(projection("+init=epsg:2163"))) 
+    x <- maptools::SpatialLinesMidPoints(x)
+  if(grepl(method,pattern="raster")){
+    x <- rasterize(x,raster(ext=extent(x),res=res,crs=CRS(projection(x))))
+      x[!is.na(x)] <- 1:sum(!is.na(x)) # give unique values to all valid cells to inform rasterToPolygons
+        x <- rasterToPolygons(x,na.rm=T,dissolve=FALSE)
+  } else if(grepl(method,pattern="rgeos")){
+    x<-rgeos::gBuffer(x,width=res/2,capStyle="SQUARE")
+  } else {
+    stop("unknown method= argument passed to spatialLinesToSpatialPolygons")
+  }
+  return(x)
+}
+
+#
 # findMaxResolution()
 # quick and dirty.  roll this up with above into a findMinExtent function.
 #
