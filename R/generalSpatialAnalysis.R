@@ -151,6 +151,46 @@ gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
 }
 
 #
+# splitExtent()
+#
+# When working with SDB queries for large areas, we consistently lose a lot of data... particularly for large
+# counties.  This gets around that by splitting an extent object into adjacent quarters so that we can download and
+# merge our raster segments later.  For small counties, this is inefficient.  But its better than just flatly attempting downloads
+#
+# Author: Kyle Taylor (kyle.taylor@pljv.org) [2016]
+#
+splitExtent <- function(e=NULL,multiple=2){
+  include(raster)
+  # define our x/y vector ranges
+  x <- rep(NA,multiple+1)
+  y <- rep(NA,multiple+1)
+  # define the x/y range for calculating the size of our extents
+  xStep <- diff(c(e@xmin,e@xmax))/multiple
+  yStep <- diff(c(e@ymin,e@ymax))/multiple
+  # assign vertices to our product vectors
+  for(i in 1:(multiple+1)){
+    x[i] <- ifelse(i==1,
+                   min(e@xmin),
+                   x[i-1]+xStep)
+    y[i] <- ifelse(i==1,
+                   min(e@ymin),
+                   y[i-1]+yStep)
+  }
+  # assign our vertices to extent objects
+  extents <- as.list(rep(NA,multiple*multiple))
+  # iterate over our extents, assigning as we go
+  yStart <- i <- 1;
+  while(i <= length(extents)){
+    for(j in 1:multiple){ # stagger our y-values
+      extents[i] <- extent(c(x[j],x[j+1],y[yStart],y[yStart+1]))
+      i <- i+1;
+    }
+    yStart <- yStart+1;
+  }
+  return(extents)
+}
+
+#
 # cropRasterByPolygons()
 # Accepts a raster and SpatialPolygonDataFrame object, iterates over each polygon feature, creating rasters
 # for each step.  A raster list is returned to the user. Useful for parsing out climate/elevation data, county-by-county,
@@ -203,30 +243,32 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
   # return the raster stack to the user, if asked
   if(!write) { return(rS) }
 }
+#
+# multiplyExtent()
+#
+multiplyExtent <- function(x,extentMultiplier=1.1){
+  e <- extent(x)
 
-  multiplyExtent <- function(x,extentMultiplier=1.1){
-    e <- extent(x)
-
-    if(!is.null(extentMultiplier)) {
-      e@xmin <- e@xmin*extentMultiplier
-      e@xmax <- e@xmax+abs(e@xmax*(extentMultiplier-1))
-      e@ymin <- e@ymin-abs(e@ymin*(extentMultiplier-1))
-      e@ymax <- e@ymax*extentMultiplier
-    }
-
-    return(e)
+  if(!is.null(extentMultiplier)) {
+    e@xmin <- e@xmin*extentMultiplier
+    e@xmax <- e@xmax+abs(e@xmax*(extentMultiplier-1))
+    e@ymin <- e@ymin-abs(e@ymin*(extentMultiplier-1))
+    e@ymax <- e@ymax*extentMultiplier
   }
 
-  as.owin <- function(x,extentMultiplier=1.1){
+  return(e)
+}
+#
+# as.owin()
+#
+as.owin <- function(x,extentMultiplier=1.1){
     e <- multiplyExtent(x,extentMultiplier=extentMultiplier)
     return(owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
-  }
-
+}
 #
 # spatialPointsToPPP()
 # accepts a spatial points data frame, converts to PPP data that can be used by spatstat
 #
-
 spatialPointsToPPP <- function(x,extentMultiplier=1.1,field=NULL){
   # attribute 'data' to 'marks' for our PPP
   if(grepl(class(x),pattern="SpatialPoints")){
