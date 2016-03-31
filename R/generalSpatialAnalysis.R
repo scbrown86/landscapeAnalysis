@@ -160,7 +160,7 @@ gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2016]
 #
 splitExtent <- function(e=NULL,multiple=2){
-  .include(raster)
+  .include('raster')
   # define our x/y vector ranges
   x <- rep(NA,multiple+1)
   y <- rep(NA,multiple+1)
