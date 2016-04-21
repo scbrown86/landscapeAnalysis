@@ -24,7 +24,9 @@ spatialPolygonsToHexagonalGrid <- function(s=NULL,n=NULL,area=NULL){
     n <- ceiling(rgeos::gArea(spTransform(s,CRS(projection("+init=epsg:2163"))))/area)
   }
   sLocations <- spsample(s, n=n, type="hexagonal")
-    return(HexPoints2SpatialPolygons(sLocations))
+    s <- HexPoints2SpatialPolygons(sLocations)
+      s <- SpatialPolygonsDataFrame(s,data=data.frame(id=1:length(s),row.names=paste(sep="","ID",1:length(s))))
+  return(s)
 }
 
 #
