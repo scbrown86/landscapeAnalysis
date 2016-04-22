@@ -15,9 +15,9 @@ require(rgdal)
 
 spatialPolygonsToGrid <- function(s=NULL,n=NULL,area=NULL,type="hexagonal"){
   # default includes
-  .include(raster)
-  .include(rgdal)
-  .include(rgeos)
+  .include('raster')
+  .include('rgdal')
+  .include('rgeos')
   # sanity checks
   if(is.null(s) | is.null(n)) { cat(" -- error: no values specified for s= and n=\n"); stop(); }
   if(!is.null(area)){ # did the user define an area (in meters) that we can use to define the number of cells in our mesh grid?
