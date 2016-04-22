@@ -6,14 +6,14 @@ require(rgdal)
 
 
 #
-# spatialPolygonsToHexagonalGrid()
+# spatialPolygonsToGrid()
 # Quick wrapper funtion for HexPoints2SpatialPolygons(), because I can never remember the name of
 # the HexPoints2SpatialPolygons function when I need it.
 #
 # Author: Kyle Taylor (kyle.taylor@pljv.org)
 #
 
-spatialPolygonsToHexagonalGrid <- function(s=NULL,n=NULL,area=NULL){
+spatialPolygonsToGrid <- function(s=NULL,n=NULL,area=NULL,type="hexagonal"){
   # default includes
   .include(raster)
   .include(rgdal)
@@ -23,7 +23,7 @@ spatialPolygonsToHexagonalGrid <- function(s=NULL,n=NULL,area=NULL){
   if(!is.null(area)){ # did the user define an area (in meters) that we can use to define the number of cells in our mesh grid?
     n <- ceiling(rgeos::gArea(spTransform(s,CRS(projection("+init=epsg:2163"))))/area)
   }
-  sLocations <- spsample(s, n=n, type="hexagonal")
+  sLocations <- spsample(s, n=n, type=type)
     s <- HexPoints2SpatialPolygons(sLocations)
       s <- SpatialPolygonsDataFrame(s,data=data.frame(id=1:length(s),row.names=paste(sep="","ID",1:length(s))))
   return(s)
