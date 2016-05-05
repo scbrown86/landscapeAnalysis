@@ -362,14 +362,15 @@ findMinExtent <- function(x, ret=NULL){
 
 #
 # Mode()
-# Find the mode of a raster stack. Bogarted from Stack Exchange.
+# Find the mode of a raster stack. Use the raster::calc() function to apply across a raster stack.
+# Bogarded from Stack Exchange.
 #
 
-Mode <- function(x, na.rm=T) {
-  ux <- unique(x)
-    ux <- ifelse(na.rm==T,ux[!is.na(ux)],ux)
-  return(ux[which.max(tabulate(raster::match(x, ux)))])
-}
+ Mode <- function(x,na.rm=T){
+    ux <- unique(x)
+    ux=ux[!is.na(ux)]
+    ux[which.max(tabulate(match(x, ux)))]
+ }
 
 #
 # spatialLinesGridToSpatialPolygons()
