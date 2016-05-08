@@ -327,10 +327,52 @@ clusterReclassify <- function(r,t=NULL, n=3){
 }
 
 #
+# splitExtent()
+#
+# When working with SDB queries for large areas, we consistently lose a lot of data... particularly for large
+# counties.  This gets around that by splitting an extent object into adjacent quarters so that we can download and
+# merge our raster segments later.  For small counties, this is inefficient.  But its better than just flatly attempting downloads
+#
+# Author: Kyle Taylor (kyle.taylor@pljv.org) [2016]
+#
+
+splitExtent <- function(e=NULL,multiple=2){
+  include('raster')
+  # define our x/y vector ranges
+  x <- rep(NA,multiple+1)
+  y <- rep(NA,multiple+1)
+  # define the x/y range for calculating the size of our extents
+  xStep <- diff(c(e@xmin,e@xmax))/multiple
+  yStep <- diff(c(e@ymin,e@ymax))/multiple
+  # assign vertices to our product vectors
+  for(i in 1:(multiple+1)){
+    x[i] <- ifelse(i==1,
+                   min(e@xmin),
+                   x[i-1]+xStep)
+    y[i] <- ifelse(i==1,
+                   min(e@ymin),
+                   y[i-1]+yStep)
+  }
+  # assign our vertices to extent objects
+  extents <- as.list(rep(NA,multiple*multiple))
+  # iterate over our extents, assigning as we go
+  yStart <- i <- 1;
+  while(i <= length(extents)){
+    for(j in 1:multiple){ # stagger our y-values
+      extents[i] <- extent(c(x[j],x[j+1],y[yStart],y[yStart+1]))
+      i <- i+1;
+    }
+    yStart <- yStart+1;
+  }
+  return(extents)
+}
+
+#
 # snapTo()
 # Ensure absolute consistency between raster objects by cropping,projecting,snapping,and (if asked) resampling
 # a raster object using a template
 #
+
 snapTo <- function(x,to=NULL,names=NULL,method='bilinear'){
   require(parallel)
   # set-up a cluster for parallelization
@@ -577,55 +619,3 @@ clusterProjectRaster <- function(x, crs=NULL, n=4){
   x<-lapply(x, FUN=resample, y=focal, method="ngb")
     return(x)
 }
-
-##
-# MERGE RASTERS PROGRAM EXAMPLE
-#
-# require(raster)
-# require(rgdal)
-#
-# argv <- commandArgs(trailingOnly=T);
-# r<-c(raster(argv[1]), raster(paste(argv[2],argv[1],sep="/")));
-# mergeRasters(r, output=argv[2]);
-# quit();
-#
-## IN BASH
-# cd TX135/RASTER; for r in `ls -1 *.tif`; do R --no-save --vanilla --slave --args $r /tmp/output.geomorphed.upsampled/TX606/RASTER/$r < /tmp/process.R; done; cd ../..;
-# cd TX495/RASTER; for r in `ls -1 *.tif`; do R --no-save --vanilla --slave --args $r /tmp/output.geomorphed.upsampled/TX615/RASTER/$r < /tmp/process.R; done; cd ../..;
-# cd TX461/RASTER; for r in `ls -1 *.tif`; do R --no-save --vanilla --slave --args $r /tmp/output.geomorphed.upsampled/TX618/RASTER/$r < /tmp/process.R; done; cd ../..;
-#
-# rm -rf TX135 TX495 TX461
-##
-
-##
-# FIND MIN EXTENT PROGRAM EXAMPLE
-#
-# source("~/Cloud/Code/ktaylor_essentialSpatialAddons.R")
-# d <- list.dirs();
-# d <- paste(d, "RASTER", sep="/")
-# for(rs in d){
-#   setwd("rs");
-#   rasters<-list.files(pattern="tif$");
-#   rasters<-lapply(as.list(rasters), FUN=raster);
-#   m<-findMinExtent(rasters, ret="SpatialPolygons");
-#   setwd("../..");
-# }
-##
-
-##
-# RECLASSIFY A LIST OF RASTERS PROGRAM EXAMPLE
-#
-# argv <- commandArgs(trailingOnly=T)
-# setwd(argv[1])
-# source("~/Cloud/Code/ktaylor_essentialSpatialAddons.R")
-# require(raster)
-# cat(" -- constructing a raster list\n")
-# files <- list.files(pattern="tif$")
-#   files <- lapply(as.list(files), FUN=raster)
-# cat(" -- resampling\n")
-# o <- clusterResample(files,n=10)
-# names <- paste(unlist(lapply(files, "names")), "tif", sep=".")
-# cat(" -- writing rasters to disk\n")
-# mapply(o,writeRaster,filename=names, overwrite=T)
-# cat(" -- done\n")
-##
