@@ -326,46 +326,6 @@ clusterReclassify <- function(r,t=NULL, n=3){
   return(r)
 }
 
-#
-# splitExtent()
-#
-# When working with SDB queries for large areas, we consistently lose a lot of data... particularly for large
-# counties.  This gets around that by splitting an extent object into adjacent quarters so that we can download and
-# merge our raster segments later.  For small counties, this is inefficient.  But its better than just flatly attempting downloads
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org) [2016]
-#
-
-splitExtent <- function(e=NULL,multiple=2){
-  include('raster')
-  # define our x/y vector ranges
-  x <- rep(NA,multiple+1)
-  y <- rep(NA,multiple+1)
-  # define the x/y range for calculating the size of our extents
-  xStep <- diff(c(e@xmin,e@xmax))/multiple
-  yStep <- diff(c(e@ymin,e@ymax))/multiple
-  # assign vertices to our product vectors
-  for(i in 1:(multiple+1)){
-    x[i] <- ifelse(i==1,
-                   min(e@xmin),
-                   x[i-1]+xStep)
-    y[i] <- ifelse(i==1,
-                   min(e@ymin),
-                   y[i-1]+yStep)
-  }
-  # assign our vertices to extent objects
-  extents <- as.list(rep(NA,multiple*multiple))
-  # iterate over our extents, assigning as we go
-  yStart <- i <- 1;
-  while(i <= length(extents)){
-    for(j in 1:multiple){ # stagger our y-values
-      extents[i] <- extent(c(x[j],x[j+1],y[yStart],y[yStart+1]))
-      i <- i+1;
-    }
-    yStart <- yStart+1;
-  }
-  return(extents)
-}
 
 #
 # snapTo()
