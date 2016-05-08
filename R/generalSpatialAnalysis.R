@@ -327,6 +327,40 @@ clusterReclassify <- function(r,t=NULL, n=3){
 }
 
 #
+# snapTo()
+# Ensure absolute consistency between raster objects by cropping,projecting,snapping,and (if asked) resampling
+# a raster object using a template
+#
+snapTo <- function(x,to=NULL,names=NULL,method='bilinear'){
+  require(parallel)
+  # set-up a cluster for parallelization
+  cl <- makeCluster((parallel::detectCores()-2))
+  # crop, reproject, and snap our raster to a resolution and projection consistent with the rest our explanatory data
+  if(grepl(tolower(class(x)),pattern="character")){ lapply(x,FUN=raster) }
+  e <- as(extent(to[[1]]),'SpatialPolygons')
+    projection(e) <- CRS(projection(to[[1]]))
+  if(class(x) == "list") {
+    x <- parLapply(cl,x,fun=raster::crop,extent(spTransform(e,CRS(projection(x[[1]])))))
+      x <- parLapply(cl,x,fun=raster::projectRaster,crs=CRS(projection(to[[1]])))
+    extents <- lapply(x,alignExtent,to[[1]])
+      for(i in 1:length(x)){ extent(x[[i]]) <- extents[[i]] }
+    if(!is.null(method)){
+      x <- parLapply(cl,x,fun=resample,y=to[[1]],method=method)
+    }
+  } else {
+    x <- raster::crop(x,extent(spTransform(e,CRS(projection(x)))))
+      x <- raster::projectRaster(x,crs=CRS(projection(to[[1]])))
+    extent <- alignExtent(x,to[[1]])
+      extent(x) <- extent
+    if(!is.null(method)){
+      x <- raster::resample(x,y=to[[1]],method=method)
+    }
+  }
+  endCluster()
+  return(x)
+}
+
+#
 # findMinExtent()
 # Find minimum extent from list of raster or extent objects.  Will return an extent object by default,
 # or the extent object as a SpatialPolygon if the ret='SpatialPolygons' argument is used.
