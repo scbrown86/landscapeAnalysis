@@ -54,21 +54,23 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
   if(is.null(pts)){
     s <- as(extent(x), 'SpatialPolygons')
       s <- spsample(s, n=n, type=type)
-        s <- split(s,f=rep(1:length(s))) # convert to a list
   } else if(class(pts) == "SpatialPoints") {
     # if the user specified spatial points at runtime, let's use them
     if(!is.na(crs(pts))){
-      require(rgdal)
-      pts <- spTransform(pts, CRS(raster::projection(x)))
+      .include(rgdal)
+      s <- spTransform(pts, CRS(raster::projection(x)))
     } else {
       cat(" -- error: NA coordinate reference system for pts= data.\n")
       stop()
     }
-    s <- split(pts,f=rep(1:length(pts)))
   } else {
     cat(" -- error: unknown input. pts= argument should be SpatialPoints\n");
     stop();
   }
+  # convert to a list
+  out <- list(); 
+    for(i in 1:length(s)){ out[[length(out)+1]] <- s[i,] }
+      s <- out; rm(out);
   # convert points to buffers and mask as needed across each buffered point
   s <- lapply(s, FUN=rgeos::gBuffer, width=width)
     r_s <- lapply(s, FUN=raster::crop, x=x)
