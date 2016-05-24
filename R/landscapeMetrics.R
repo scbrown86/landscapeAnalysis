@@ -57,7 +57,7 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
   } else if(class(pts) == "SpatialPoints") {
     # if the user specified spatial points at runtime, let's use them
     if(!is.na(crs(pts))){
-      .include(rgdal)
+      .include('rgdal')
       s <- spTransform(pts, CRS(raster::projection(x)))
     } else {
       cat(" -- error: NA coordinate reference system for pts= data.\n")
