@@ -41,7 +41,7 @@ spatialPolygonsToGrid <- function(s=NULL,n=NULL,area=NULL,type="hexagonal"){
 subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL, DEBUG=F){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
-  .include(rgeos)
+  .include('rgeos')
   # sanity checks
   if(is.null(x)) {
     cat(" -- error: x= parameter is undefined.\n");
