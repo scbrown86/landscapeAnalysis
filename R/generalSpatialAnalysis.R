@@ -411,15 +411,15 @@ findMinExtent <- function(x, ret=NULL){
 #
 # spatialLinesGridToSpatialPolygons()
 # accepts an x=SpatialLines* object and converts to polygons.  Useful for generating samples within national grid units.
-# 
+#
 
 spatialLinesGridToSpatialPolygons <- function(x, res=1000,method="raster"){
   .include('maptools')
   .include('raster')
   if(!inherits(x,'SpatialLines')) stop("x= argument is not of type SpatialLines*")
-  # convert to an arbitrary CRS with metric units and decent consistency across North America for maptools::SpatialLinesMidPoints() 
+  # convert to an arbitrary CRS with metric units and decent consistency across North America for maptools::SpatialLinesMidPoints()
   originalCRS <- raster::CRS(raster::projection(x))
-  x <- spTransform(x,CRS(projection("+init=epsg:2163"))) 
+  x <- spTransform(x,CRS(projection("+init=epsg:2163")))
     x <- maptools::SpatialLinesMidPoints(x)
   if(grepl(method,pattern="raster")){
     x <- rasterize(x,raster(ext=extent(x),res=res,crs=CRS(projection(x))))
@@ -545,7 +545,6 @@ clusterProjectRaster <- function(x, crs=NULL, n=4){
   .include('raster')
   .include('rgdal')
   .include('snow')
-
   # sanity checks
   if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
   if(length(unique(unlist(lapply(x, FUN=projection)))) == 1) { # do the projections of rasters in our list actually differ?
@@ -563,10 +562,9 @@ clusterProjectRaster <- function(x, crs=NULL, n=4){
     }
   }
 
-  # build a snow cluster
   endCluster();
     beginCluster(n=n);
-  # find our minimum extent and maximum resolution
+
   if(is.null(extent) || is.null(resolution)){
     extent <- findMinExtent(x)
        res <- findMaxResolution(x)
@@ -578,4 +576,36 @@ clusterProjectRaster <- function(x, crs=NULL, n=4){
 
   x<-lapply(x, FUN=resample, y=focal, method="ngb")
     return(x)
+}
+
+# polygonPathDistance()
+# calculates path distances in a verroni tesselation.  Function accepts a polygon object
+# with an id= argument specify the focal (center) polygon from which path distances are calculated.
+# returns attributed polygons with a $class field indicating the path distance as 1,2,3, etc...
+polygonPathDistance <- function(x=null,id=0){
+  .include("rgdal")
+  .include("rgeos")
+  # sanity checks
+  if(!inherits(x,"SpatialPolygons")){
+    stop("x= argument should specify a SpatialPolygons* object")
+  } else if(is.null(x$id)){
+    x$id <- 1:length(x)
+  }
+  # iterate over our polygons until every polygon has been attributed with a class
+  class <- 0
+    x$class <- -1
+      x@data[x$id == id,'class'] <- class
+  while(sum(x$class == -1)>0){
+    focal <- x[x$class == -1,]
+    rows <- try(which(as.vector(colSums(gTouches(focal,x[x$class == class,],byid=T)) > 0)))
+    if(class(rows)!="try-error"){
+      focal@data[rows,'class'] <- rep(class+1, length(focal@data[rows,'class']))
+      x@data[x$class == -1,] <- focal@data
+      class <- class + 1
+    } else {
+      warning("failed to identify an adjacency for next step in path")
+      return(x)
+    }
+  }
+  return(x)
 }
