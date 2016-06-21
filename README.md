@@ -1,5 +1,5 @@
 # landscapeAnalysis
-This is a work in progress that will eventually be rolled into a formal R package.  These tools should be useful for regional landscape montoring efforts and more.
+This is an MVP for a collection of algorithms for processing and analysing raster and vector data in the 'R' language.  I use it for almost every bit of landscape modeling I do and plan on keeping it as a labor-of-love for some time to come. Still, the code is dynamic (i.e., immature).  It needs documentation, optimization, and some double-checking if you are using it in a production environment or for published research. It's intended for deployment in high-performance UNIX environments, but should work on any computer that supports 'R'. Please file bug reports and issues as they arise.  
 
 # installation
 ```
