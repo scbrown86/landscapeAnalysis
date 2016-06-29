@@ -582,30 +582,57 @@ clusterProjectRaster <- function(x, crs=NULL, n=4){
 # calculates path distances in a verroni tesselation.  Function accepts a polygon object
 # with an id= argument specify the focal (center) polygon from which path distances are calculated.
 # returns attributed polygons with a $class field indicating the path distance as 1,2,3, etc...
-polygonPathDistance <- function(x=null,id=0){
-  .include("rgdal")
-  .include("rgeos")
+# Incorporates a width= argument for buffering to account for slivers and islands.
+polygonPathDistance <- function(x=null,id=0, width=NULL, quietly=F){
+  require("rgdal")
+  require("rgeos")
   # sanity checks
   if(!inherits(x,"SpatialPolygons")){
     stop("x= argument should specify a SpatialPolygons* object")
   } else if(is.null(x$id)){
     x$id <- 1:length(x)
   }
+  if(is.null(width)){
+    if(!grepl(projection(x),pattern="+units=m")){
+      warning("units for x= argument are not in meters -- assuming 50-meter degrees-equivalent for buffering. Re-run with width=0 to disable buffering.")
+      width <- 0.00044915599
+    } else {
+      warning("null width= argument -- assuming a 50 meter buffer distance for the step algorithm.  Re-run with width=0 to disable buffering.")
+      width <- 50
+    }
+  }
   # iterate over our polygons until every polygon has been attributed with a class
   class <- 0
     x$class <- -1
       x@data[x$id == id,'class'] <- class
+
+  if(!quietly) cat(" -- stepping through polygon adjacencies: ")
   while(sum(x$class == -1)>0){
-    focal <- x[x$class == -1,]
-    rows <- try(which(as.vector(colSums(gTouches(focal,x[x$class == class,],byid=T)) > 0)))
-    if(class(rows)!="try-error"){
-      focal@data[rows,'class'] <- rep(class+1, length(focal@data[rows,'class']))
-      x@data[x$class == -1,] <- focal@data
-      class <- class + 1
+    # unclassified polygons
+    focal <- x[x$class == -1,];
+    # parse-out the classified polygons from previous iteration
+    if(width>0){
+      lastClass <- gBuffer(x[x$class == class,],width=width)
     } else {
-      warning("failed to identify an adjacency for next step in path")
-      return(x)
+      lastClass <- x[x$class == class,]
     }
-  }
+    # identify overlap between unclassified polygons and last classified polygons (buffered by some distance)
+    suppressMessages(rows <- try(which(as.vector(colSums(gOverlaps(focal,lastClass,byid=T)) > 0))))
+    # if gOverlaps() was successful, keep on chugging -- otherwise, return what we have to the user for debugging
+    if(class(rows)!="try-error"){
+      if(length(rows)==0){
+        warning(paste("no overlapping polygons found at step ",class," -- quiting."))
+        return(x);
+      }
+      focal@data[rows,'class'] <- rep(class+1, length(focal@data[rows,'class']));
+      x@data[x$class == -1,] <- focal@data;
+      class <- class + 1;
+    } else {
+      # break on failure to identify an adjacency for next iteration
+      return(x);
+    }
+    if(!quietly) cat(paste("[",class,"]",sep=""));
+  };
+  if(!quietly) cat("\n");
   return(x)
 }
