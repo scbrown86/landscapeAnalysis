@@ -579,13 +579,15 @@ clusterProjectRaster <- function(x, crs=NULL, n=4){
 }
 
 # polygonPathDistance()
+#
 # calculates path distances in a verroni tesselation.  Function accepts a polygon object
 # with an id= argument specify the focal (center) polygon from which path distances are calculated.
 # returns attributed polygons with a $class field indicating the path distance as 1,2,3, etc...
 # Incorporates a width= argument for buffering to account for slivers and islands.
+#
 polygonPathDistance <- function(x=null,id=0, width=NULL, quietly=F){
-  require("rgdal")
-  require("rgeos")
+  .include("rgdal")
+  .include("rgeos")
   # sanity checks
   if(!inherits(x,"SpatialPolygons")){
     stop("x= argument should specify a SpatialPolygons* object")
@@ -594,10 +596,10 @@ polygonPathDistance <- function(x=null,id=0, width=NULL, quietly=F){
   }
   if(is.null(width)){
     if(!grepl(projection(x),pattern="+units=m")){
-      warning("units for x= argument are not in meters -- assuming 50-meter degrees-equivalent for buffering. Re-run with width=0 to disable buffering.")
+      warning("units for x= argument are not in meters. Assuming 50-meter degrees-equivalent for buffering. Re-run with width=0 to disable buffering.")
       width <- 0.00044915599
     } else {
-      warning("null width= argument -- assuming a 50 meter buffer distance for the step algorithm.  Re-run with width=0 to disable buffering.")
+      warning("null width= argument. Assuming a 50 meter buffer distance for the step algorithm.  Re-run with width=0 to disable buffering.")
       width <- 50
     }
   }
@@ -621,6 +623,7 @@ polygonPathDistance <- function(x=null,id=0, width=NULL, quietly=F){
     # if gOverlaps() was successful, keep on chugging -- otherwise, return what we have to the user for debugging
     if(class(rows)!="try-error"){
       if(length(rows)==0){
+        # break on failure to identify an adjacency for next iteration
         warning(paste("no overlapping polygons found at step ",class," -- quiting."))
         return(x);
       }
