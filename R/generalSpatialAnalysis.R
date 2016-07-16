@@ -47,12 +47,19 @@
 # getGDALtoolByName()
 #
 .getGDALtoolByName <- function(x=NULL){
-  if(grepl(tolower(x),pattern="gdal_polygonize")){
-    GDAL_POLYGONIZE <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), FUN=list.files, pattern="gdal_polygonize.py", full.names=T))
-      if(length(GDAL_POLYGONIZE)<1) stop("couldn't find gdal_polygonize.py tool in PATH")
-        return(GDAL_POLYGONIZE)
-  }
-  return(NULL)
+  x <- tolower(x)
+    x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), 
+          FUN=list.files, pattern=x, full.names=T))
+          
+  if(length(x)<1){
+    warning(paste("couldn't find",x,"tool in PATH",sep=""))
+    return(NULL)
+  } else if(length(x)>1){
+    warning(paste("multiple references to ",x," tool in PATH -- honoring first occurrence.",sep=""))
+    return(x[1])
+  } 
+  
+  return(x)
 }
 
 #
@@ -461,33 +468,53 @@ findMaxResolution <- function(x) {
 }
 
 #
-# mergeRasters()
+# lMerge()
 # quickly merge rasters passed as either list or vector of filenames. Useful for merging SSURGO RASTER data across counties
 # implemented by (ex):
 # files <- list.files(pattern="tif"); files <- files[!grepl(files,pattern=".tif.")]
 # for(f in files){ focal <- list(raster(f), raster(paste("../../TX615/RASTER",f,sep="/"))); mergeRasters(x=focal, output="../../TX615/RASTER"); }
 #
 
-mergeRasters <- function(x, output=NULL){
-  # convert a vector of filenames to a list of rasters, if the user didn't already create a list of rasters
-  if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
-
-  master <- x[[1]]
-  if(length(x) > 1){
-    cat(" -- processing: ")
-    for(i in 2:length(x)){
-      master <- try(raster::merge(master,x[[i]]));
-        if(class(master) == "try-error") { cat(" -- error:", master, "\n",sep=" "); stop(); }
-      cat(".")
-    }
-    cat("\n")
+lMerge <- function(x, output=NULL, method="R"){
+  # sanity checks
+  if(length(x)<2){
+    stop("x= argument should be a list or vector with a length greater than 1 for a merge operation.")
   }
-  cat(" -- done\n")
-  if(!is.null(output)){
-    #writeRaster(master,paste(output,master@data@names,sep="/"),overwrite=T)
-    writeRaster(master,filename=output,overwrite=T)
-  } else {
-    return(master)
+  # Default "R" method for merging 
+  if(grepl(tolower(method),pattern="r")){
+    # convert a vector of filenames to a list of rasters, if the user didn't already create a list of rasters
+    if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
+  
+    master <- x[[1]]
+    if(length(x) > 1){
+      cat(" -- processing: ")
+      for(i in 2:length(x)){
+        master <- try(raster::merge(master,x[[i]]));
+          if(class(master) == "try-error") { cat(" -- error:", master, "\n",sep=" "); stop(); }
+        cat(".")
+      }
+      cat("\n")
+    }
+    cat(" -- done\n")
+    if(!is.null(output)){
+      #writeRaster(master,paste(output,master@data@names,sep="/"),overwrite=T)
+      writeRaster(master,filename=output,overwrite=T)
+    } else {
+      return(master)
+    }
+  # snappier GDAL method of merging, for environments that support it
+  } else if(grepl(tolower(method),pattern="gdal")){
+    # sanity-checks
+    if(class(x) == "list"){
+      # assume x= list is a list of rasters.  Get the filenames from that list
+    }
+    # attempt a merge
+    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_merge"),"-tap -o gdal_merged.tif",x,sep=" ")))==0){
+      # success
+      return(raster("gdal_merged.tif"))
+    } else {
+      stop("gdal_merge.py failed (non-zero status)")
+    }
   }
 }
 
