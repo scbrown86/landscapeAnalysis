@@ -507,9 +507,11 @@ lMerge <- function(x, output=NULL, method="R"){
     # sanity-checks
     if(class(x) == "list"){
       # assume x= list is a list of rasters.  Get the filenames from that list
+      stop("list operation not yet implemented. Gdal method currently requires x= vector()")
     }
     # attempt a merge
-    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_merge"),"-tap -o gdal_merged.tif",x,sep=" ")))==0){
+    if(is.null(output)) output <- "gdal_merged.tif"
+    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_merge"),"-tap -o",output,x,sep=" ")))==0){
       # success
       return(raster("gdal_merged.tif"))
     } else {
