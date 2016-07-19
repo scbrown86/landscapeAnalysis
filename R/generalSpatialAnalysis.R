@@ -511,9 +511,9 @@ lMerge <- function(x, output=NULL, method="R"){
     }
     # attempt a merge
     if(is.null(output)) output <- "gdal_merged.tif"
-    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_merge"),"-tap -o",output,x,sep=" ")))==0){
+    if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_merge"),"-tap -o",output,"-of GTiff",x,sep=" ")))==0){
       # success
-      return(raster("gdal_merged.tif"))
+      return(raster(output))
     } else {
       stop("gdal_merge.py failed (non-zero status)")
     }
