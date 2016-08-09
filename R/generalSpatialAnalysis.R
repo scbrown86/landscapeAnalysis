@@ -63,6 +63,29 @@
 }
 
 #
+# parseLayerDsn()
+# 
+.parseLayerDsn <- function(x=NULL){
+  path <- unlist(strsplit(x, split="/"))
+    layer <- gsub(path[length(path)],pattern=".shp",replacement="")
+      dsn <- paste(path[1:(length(path)-1)],collapse="/")
+  return(c(layer,dsn))
+}
+
+#
+# readOGRfromPath()
+# 
+.readOGRfromPath <- function(path=NULL){
+  .include('rgdal')
+  path <- parseLayerDsn(path)
+   
+  layer <- path[1]
+    dsn <- path[2]
+
+  return(readOGR(dsn,layer,verbose=F))
+}
+
+#
 # rasterToPolygons()
 # convert a raster to polygons using either 'R' or 'GDAL'.  GDAL is the (faster) default selection
 #
