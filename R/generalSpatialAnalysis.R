@@ -77,7 +77,7 @@
 # 
 .readOGRfromPath <- function(path=NULL){
   .include('rgdal')
-  path <- parseLayerDsn(path)
+  path <- .parseLayerDsn(path)
    
   layer <- path[1]
     dsn <- path[2]
