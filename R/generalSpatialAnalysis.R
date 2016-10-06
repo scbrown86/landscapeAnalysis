@@ -65,7 +65,7 @@ parseLayerDsn <- function(x=NULL){
 }
 #' built-in (hidden) function that will accept the full path of a shapefile and read using rgdal::ogr
 #' @param path argument provides the full path to an ESRI Shapefile
-.readOGRfromPath <- function(path=NULL){
+readOGRfromPath <- function(path=NULL){
   landscapeAnalysis:::include('rgdal')
   path <- landscapeAnalysis:::parseLayerDsn(path)
    
@@ -92,7 +92,7 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
      r_name=paste(r_name,sprintf("%.0f", round(as.numeric(runif(n=1,min=0,max=9999999)))),sep="_")
    raster::writeRaster(r,paste(r_name,"tif",sep="."),overwrite=T);
    cleanUp(r_name)
-   if(try(system(paste(.getPythonPath(),.getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" ")))==0){
+   if(try(system(paste(landscapeAnalysis:::getPythonPath(),landscapeAnalysis:::getGDALtoolByName("gdal_polygonize"),"-8",paste(r_name,"tif",sep="."),"-f \"ESRI Shapefile\"",paste(r_name,"shp",sep="."),sep=" ")))==0){
      if(class(try(s<-rgdal::readOGR(".",r_name,verbose=F))) != "try-error"){
        cleanUp(r_name,rmAll=T)
        return(s);
@@ -109,14 +109,8 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
     return(raster::rasterToPolygons(r, dissolve=T,progress='text'))
   }
 }
-
-#
-# extractDensities()
-# extract quantiles from a continuous raster surface as spatial polygons using GDAL
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org)
-#
-
+#' extract quantiles from a continuous raster surface as spatial polygons using GDAL
+#' @export
 extractDensities <- function(x,s=5,d=15, p=c(0.5,0.9)){
   p <- sprintf("%.2f", round(as.numeric(p),2)) # force a trailing N
   # extract  range contours for raster surface x
@@ -137,12 +131,8 @@ extractDensities <- function(x,s=5,d=15, p=c(0.5,0.9)){
   return(out)
 }
 
-#
-# gaussianSmoothing()
-# Implements a gaussian smoothing window as specified and implemented by Jeff Evans [2014] (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
-# Author: Kyle Taylor (kyle.taylor@pljv.org) [originally J. Evans]
-#
-
+#' Implements a gaussian smoothing window as specified and implemented by Jeff Evans [2014] (see: http://evansmurphy.wix.com/evansspatial#!spatial-smoothing/ch1)
+#' @export
 gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
   landscapeAnalysis::include('sp')
   landscapeAnalysis::include('raster')
@@ -165,15 +155,11 @@ gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
   }
 }
 
-#
-# splitExtent()
-#
-# When working with SDB queries for large areas, we consistently lose a lot of data... particularly for large
-# counties.  This gets around that by splitting an extent object into adjacent quarters so that we can download and
-# merge our raster segments later.  For small counties, this is inefficient.  But its better than just flatly attempting downloads
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org) [2016]
-#
+#' When working with SDB queries for large areas, we consistently lose a lot of data... particularly for large
+#' counties.  This gets around that by splitting an extent object into adjacent quarters so that we can download and
+#' merge our raster segments later.  For small counties, this is inefficient.  But its better than just flatly attempting downloads
+#'
+#' @export
 splitExtent <- function(e=NULL,multiple=2){
   landscapeAnalysis::include('raster')
   # define our x/y vector ranges
@@ -204,14 +190,10 @@ splitExtent <- function(e=NULL,multiple=2){
   }
   return(extents)
 }
-
-#
-# cropRasterByPolygons()
-# Accepts a raster and SpatialPolygonDataFrame object, iterates over each polygon feature, creating rasters
-# for each step.  A raster list is returned to the user. Useful for parsing out climate/elevation data, county-by-county,
-# for an entire state and then processing with the parallel package.
-#
-
+#' Accepts a raster and SpatialPolygonDataFrame object, iterates over each polygon feature, creating rasters
+#' for each step.  A raster list is returned to the user. Useful for parsing out climate/elevation data, county-by-county,
+#' for an entire state and then processing with the parallel package.
+#' @export
 cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F){
 
   landscapeAnalysis::include('raster')
@@ -237,7 +219,7 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
       s <- sp::split(s, f=1:nrow(s)) # split to list by row for apply operations
   # don't try to parallelize with a large number of polygons unless you are on a system with a whole lot of RAM
   if(parallel){
-    landscapeAnalysis::include('parallel');
+    landscapeAnalysis:::include('parallel');
     cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1),outfile='outfile.log');
      r <- parLapply(cl=cl,Y=s,fun=raster::crop,X=rep(list(r),length(s)))
       rS <- parLapply(cl=cl,Y=s,fun=raster::mask,x=focal)
@@ -258,9 +240,9 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
   # return the raster stack to the user, if asked
   if(!write) { return(rS) }
 }
-#
-# multiplyExtent()
-#
+#' an extent multiplier that will expand an extent object by a user-specified multiple
+#' @param extentMultiplier multiple (anything greater than 1 will extend by 1-multiple percent)
+#' @export
 multiplyExtent <- function(x,extentMultiplier=1.1){
   e <- extent(x)
 
@@ -273,9 +255,11 @@ multiplyExtent <- function(x,extentMultiplier=1.1){
 
   return(e)
 }
-#
-# as.owin()
-#
+#' accepts an extent object and returns it as an owin object used
+#' in the spatstat package.
+#' @param x original extent object
+#' @param extentMultiplier optional extent multiplier to expand our owin beyond the extent of x
+#' @export
 as.owin <- function(x,extentMultiplier=1.1){
     e <- multiplyExtent(x,extentMultiplier=extentMultiplier)
     return(owin(xrange=c(e@xmin,e@xmax), yrange=c(e@ymin,e@ymax)))
