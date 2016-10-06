@@ -7,13 +7,12 @@
 # can be done with pure R (for now).
 #
 
-#
-# include()
-# wrapper function for require that will rudely attempt to install missing packages.
-#
-# Author: Kyle Taylor
-#
-.include <- function(x,from="cran",repo=NULL){
+#' built-in (hidden) wrapper function for require that will rudely attempt to install missing packages.
+#'
+#' @param x specifies the package name
+#' @param from specifies whether we are fetching from CRAN or GitHub
+#' @param repo specifies the repository URL to use.  Will pick a few good ones by default.
+include <- function(x,from="cran",repo=NULL){
   if(from == "cran"){
     if(!do.call(require,as.list(x))) install.packages(x, repos=c("http://cran.revolutionanalytics.com","http://cran.us.r-project.org"));
     if(!do.call(require,as.list(x))) stop("auto installation of package ",x," failed.\n")
@@ -76,7 +75,7 @@
 # readOGRfromPath()
 # 
 .readOGRfromPath <- function(path=NULL){
-  .include('rgdal')
+  landscapeAnalysis:::include('rgdal')
   path <- .parseLayerDsn(path)
    
   layer <- path[1]
@@ -159,9 +158,9 @@ extractDensities <- function(x,s=5,d=15, p=c(0.5,0.9)){
 #
 
 gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
-  .include('sp')
-  .include('raster')
-  .include('rgdal')
+  landscapeAnalysis::include('sp')
+  landscapeAnalysis::include('raster')
+  landscapeAnalysis::include('rgdal')
   if (!inherits(x, "RasterLayer")) stop("x= argument expects a raster* object")
      GaussianKernel <- function(sigma=s, n=d) {
         m <- matrix(nc=n, nr=n)
@@ -190,7 +189,7 @@ gaussianSmoothing <- function(x, s=1, d=5, filename=FALSE, ...) {
 # Author: Kyle Taylor (kyle.taylor@pljv.org) [2016]
 #
 splitExtent <- function(e=NULL,multiple=2){
-  .include('raster')
+  landscapeAnalysis::include('raster')
   # define our x/y vector ranges
   x <- rep(NA,multiple+1)
   y <- rep(NA,multiple+1)
@@ -229,8 +228,8 @@ splitExtent <- function(e=NULL,multiple=2){
 
 cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F){
 
-  .include('raster')
-  .include('rgdal')
+  landscapeAnalysis::include('raster')
+  landscapeAnalysis::include('rgdal')
 
   rS <- list()
 
@@ -252,7 +251,7 @@ cropRasterByPolygons <- function(r=NULL, s=NULL, field=NULL, write=F, parallel=F
       s <- sp::split(s, f=1:nrow(s)) # split to list by row for apply operations
   # don't try to parallelize with a large number of polygons unless you are on a system with a whole lot of RAM
   if(parallel){
-    .include('parallel');
+    landscapeAnalysis::include('parallel');
     cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1),outfile='outfile.log');
      r <- parLapply(cl=cl,Y=s,fun=raster::crop,X=rep(list(r),length(s)))
       rS <- parLapply(cl=cl,Y=s,fun=raster::mask,x=focal)
@@ -318,8 +317,8 @@ spatialPointsToPPP <- function(x,extentMultiplier=1.1,field=NULL){
 }
 
 csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
-  .include('sp')
-  .include('raster')
+  landscapeAnalysis::include('sp')
+  landscapeAnalysis::include('raster')
   # attempt to read-in csv data and convert to SpatialPointsDataFrame
   if(file.exists(path)){ t<-read.csv(path);
   } else { stop(" -- failed to open input csv.\n") }
@@ -337,8 +336,8 @@ csvToSpatialDataFrame <- function(path=NULL, proj4string="+init=epsg:4326"){
 #
 
 clusterReclassify <- function(r,t=NULL, n=3){
-  .include('snow')
-  .include('raster')
+  landscapeAnalysis::include('snow')
+  landscapeAnalysis::include('raster')
 
   # sanity checks
   if(is.null(t)){
@@ -399,7 +398,7 @@ snapTo <- function(x,to=NULL,names=NULL,method='bilinear'){
 #
 
 findMinExtent <- function(x, ret=NULL){
-  .include('raster')
+  landscapeAnalysis::include('raster')
   # sanity-check
   if(!is.list(x)) { cat(" -- error: x= parameter should be a list.\n"); stop(); }
   # pre-process: if this is a raster list, let's solve for individual raster extents
@@ -444,8 +443,8 @@ findMinExtent <- function(x, ret=NULL){
 #
 
 spatialLinesGridToSpatialPolygons <- function(x, res=1000,method="raster"){
-  .include('maptools')
-  .include('raster')
+  landscapeAnalysis::include('maptools')
+  landscapeAnalysis::include('raster')
   if(!inherits(x,'SpatialLines')) stop("x= argument is not of type SpatialLines*")
   # convert to an arbitrary CRS with metric units and decent consistency across North America for maptools::SpatialLinesMidPoints()
   originalCRS <- raster::CRS(raster::projection(x))
@@ -469,7 +468,7 @@ spatialLinesGridToSpatialPolygons <- function(x, res=1000,method="raster"){
 #
 
 findMaxResolution <- function(x) {
-  .include('raster')
+  landscapeAnalysis::include('raster')
   # sanity-check
   if(!is.list(x)) { cat(" -- error: x= parameter should be a list of spatial rasters.\n"); stop(); }
   if(length(unique(unlist(lapply(x, FUN=projection)))) > 1) {
@@ -550,8 +549,8 @@ lMerge <- function(x, output=NULL, method="R"){
 #
 
 clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
-  .include('raster')
-  .include('snow')
+  landscapeAnalysis::include('raster')
+  landscapeAnalysis::include('snow')
 
   # sanity checks
   if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
@@ -594,9 +593,9 @@ clusterResample <- function(x, extent=NULL, resolution=NULL, n=4){
 #
 
 clusterProjectRaster <- function(x, crs=NULL, n=4){
-  .include('raster')
-  .include('rgdal')
-  .include('snow')
+  landscapeAnalysis::include('raster')
+  landscapeAnalysis::include('rgdal')
+  landscapeAnalysis::include('snow')
   # sanity checks
   if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
   if(length(unique(unlist(lapply(x, FUN=projection)))) == 1) { # do the projections of rasters in our list actually differ?
@@ -638,8 +637,8 @@ clusterProjectRaster <- function(x, crs=NULL, n=4){
 # Incorporates a width= argument for buffering to account for slivers and islands.
 #
 polygonPathDistance <- function(x=null,id=0, width=NULL, quietly=F){
-  .include("rgdal")
-  .include("rgeos")
+  landscapeAnalysis::include("rgdal")
+  landscapeAnalysis::include("rgeos")
   # sanity checks
   if(!inherits(x,"SpatialPolygons")){
     stop("x= argument should specify a SpatialPolygons* object")
