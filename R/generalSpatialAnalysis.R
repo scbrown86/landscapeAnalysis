@@ -26,12 +26,8 @@ include <- function(x,from="cran",repo=NULL){
     stop(paste("could find package:",x))
   }
 }
-
-#
-# getPythonPath()
-#
-
-.getPythonPath <- function(){
+#' built-in (hidden) function that will parse the system path for all occurrences of python and take the first occurrence as the version to use
+getPythonPath <- function(){
   PYTHON <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), FUN=list.files, pattern="python", full.names=T))
   if(length(PYTHON)>1){
     warning("multiple python binaries found in PATH.  Making a guess as to the default to use.")
@@ -41,11 +37,9 @@ include <- function(x,from="cran",repo=NULL){
   }
   return(PYTHON)
 }
-
-#
-# getGDALtoolByName()
-#
-.getGDALtoolByName <- function(x=NULL){
+#' built-in (hidden) function that will accept a GDAL tool by name and attempt to find it within the user's current PATH
+#' @param x GDAL tool name (e.g., gdal_proximity.py)
+getGDALtoolByName <- function(x=NULL){
   x <- tolower(x)
     x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), 
           FUN=list.files, pattern=x, full.names=T))
@@ -61,36 +55,28 @@ include <- function(x,from="cran",repo=NULL){
   return(x)
 }
 
-#
-# parseLayerDsn()
-# 
-.parseLayerDsn <- function(x=NULL){
+#' built-in (hidden) function that will accept the full path of a shapefile and parse the string into something that
+#' rgdal can understand (DSN + Layer).
+parseLayerDsn <- function(x=NULL){
   path <- unlist(strsplit(x, split="/"))
     layer <- gsub(path[length(path)],pattern=".shp",replacement="")
       dsn <- paste(path[1:(length(path)-1)],collapse="/")
   return(c(layer,dsn))
 }
-
-#
-# readOGRfromPath()
-# 
+#' built-in (hidden) function that will accept the full path of a shapefile and read using rgdal::ogr
+#' @param path argument provides the full path to an ESRI Shapefile
 .readOGRfromPath <- function(path=NULL){
   landscapeAnalysis:::include('rgdal')
-  path <- .parseLayerDsn(path)
+  path <- landscapeAnalysis:::parseLayerDsn(path)
    
   layer <- path[1]
     dsn <- path[2]
 
-  return(readOGR(dsn,layer,verbose=F))
+  return(rgdal::readOGR(dsn,layer,verbose=F))
 }
-
-#
-# rasterToPolygons()
-# convert a raster to polygons using either 'R' or 'GDAL'.  GDAL is the (faster) default selection
-#
-# Author: Kyle Taylor
-#
-
+#' convert a raster to polygons using either 'R' or 'GDAL'.  GDAL is the (faster) default selection
+#' @param r a raster object that we will convert to a polygon
+#' @export
 rasterToPolygons <- function(r=NULL, method='gdal'){
 
  cleanUp <- function(n,rmAll=F){
