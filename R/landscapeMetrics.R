@@ -15,9 +15,9 @@ require(rgdal)
 
 spatialPolygonsToGrid <- function(s=NULL,n=NULL,area=NULL,type="hexagonal"){
   # default includes
-  .include('raster')
-  .include('rgdal')
-  .include('rgeos')
+  landscapeAnalysis:::include('raster')
+  landscapeAnalysis:::include('rgdal')
+  landscapeAnalysis:::include('rgeos')
   # sanity checks
   if(is.null(s) && is.null(n)) { cat(" -- error: no values specified for s= and n=\n"); stop(); }
   if(!is.null(area)){ # did the user define an area (in meters) that we can use to define the number of cells in our mesh grid?
@@ -41,7 +41,7 @@ spatialPolygonsToGrid <- function(s=NULL,n=NULL,area=NULL,type="hexagonal"){
 subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL, DEBUG=F){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
-  .include('rgeos')
+  landscapeAnalysis:::include('rgeos')
   # sanity checks
   if(is.null(x)) {
     cat(" -- error: x= parameter is undefined.\n");
@@ -57,7 +57,7 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
   } else if(class(pts) == "SpatialPoints") {
     # if the user specified spatial points at runtime, let's use them
     if(!is.na(crs(pts))){
-      .include('rgdal')
+      landscapeAnalysis:::include('rgdal')
       s <- spTransform(pts, CRS(raster::projection(x)))
     } else {
       cat(" -- error: NA coordinate reference system for pts= data.\n")
@@ -102,11 +102,11 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 #
 
 calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
-  .include('raster');
-  .include('sp');
-  .include('rgeos');
-  .include('FNN');
-  .include('parallel');
+  landscapeAnalysis:::include('raster');
+  landscapeAnalysis:::include('sp');
+  landscapeAnalysis:::include('rgeos');
+  landscapeAnalysis:::include('FNN');
+  landscapeAnalysis:::include('parallel');
   # set-up our cluster
   if(parallel) cl <- makeCluster(getOption("cl.cores", parallel::detectCores()-1))
   # convert our raster to polygons
