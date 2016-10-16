@@ -1,18 +1,9 @@
 require(raster)
 require(rgdal)
 
-# sampling addons and other goodies
-# source("~/Cloud/Code/ktaylor_essentialSpatialAddons.R")
-
-
-#
-# spatialPolygonsToGrid()
-# Quick wrapper funtion for HexPoints2SpatialPolygons(), because I can never remember the name of
-# the HexPoints2SpatialPolygons function when I need it.
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org)
-#
-
+#' A quick wrapper funtion for HexPoints2SpatialPolygons(), because I can never remember the name of
+#' the HexPoints2SpatialPolygons function when I need it.
+#' @export
 spatialPolygonsToGrid <- function(s=NULL,n=NULL,area=NULL,type="hexagonal"){
   # default includes
   landscapeAnalysis:::include('raster')
@@ -29,15 +20,10 @@ spatialPolygonsToGrid <- function(s=NULL,n=NULL,area=NULL,type="hexagonal"){
   return(s)
 }
 
-#
-# subsampleSurface()
-# accepts a RasterLayer (and optional input pts=SpatialPoints object) and either generates a
-# buffered point pattern process across its surface or buffers the pts= data and performs an extraction
-# across the raster surface using those data.  Returns a list containing the extractions.
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org)
-#
-
+#' Accepts a RasterLayer (and optional input pts=SpatialPoints object) and either generates a
+#' buffered point pattern process across its surface or buffers the pts= data and performs an extraction
+#' across the raster surface using those data.  Returns a list containing the extractions.
+#' @export
 subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL, DEBUG=F){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
@@ -82,25 +68,19 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
   return(s)
 }
 
-#
-# lReclass()
-# accepts a list of rasters and reclasses each raster to a binary surface where 1=focal cover value and
-# 0=everything else
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org)
-#
-
+#' accepts a list of rasters and reclasses each raster to a binary surface where 1=focal cover value and
+#' 0=everything else
+#' @export
 lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=raster::match,table=inValues,nomatch=nomatch), FUN=calc, fun=function(x,na.rm=F){x>=1})
 
-#
-# calcPatchIsolation()
-# Calculate the KNN distance between patches in a binary raster (or raster(s); a vector or list) specified by r=RasterLayer.
-# You can either return the KNN index or some statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
-# I have added multi-core support and use the gdal backend by default for this analysis. It's much faster than doing it in pure 'R'.
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org) [2015]
-#
-
+#' Calculate the KNN distance between patches in a binary raster (or raster(s); a vector or list) specified by r=RasterLayer.
+#' You can either return the KNN index or some statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
+#' I have added multi-core support and use the gdal backend by default for this analysis. It's much faster than doing it in pure 'R'.
+#' @param fun a function that is applied to all KNN distances (i.e., for calculating mean/median/mode distances).
+#' @param k the K (e.g., 1,2,3) value used for our K nearest-neighbor calculation.
+#' @param method string specifying whether 'gdal' or 'R' is used to vectorize our raster patches for the KNN calculation.
+#' @param parallel TRUE/FALSE specifying whether to parallelize our vectorization / KNN operations.
+#' @export
 calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
   landscapeAnalysis:::include('raster');
   landscapeAnalysis:::include('sp');
@@ -134,15 +114,16 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
   return(as.vector(unlist(r)))
 }
 
-#
-# calculateLandscapeMetric()
-# quick wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape
-# metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the SDMTools package.
-#
-# Author: Kyle Taylor (kyle.taylor@pljv.org)
-#
 
-lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
+#' a wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape
+#' metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the SDMTools package.
+#'
+#' @param x list object containing raster(s) that will be passed to 'SDMTools' to calculate class/patch statistics.
+#' @param metric a vector containing the target class/patch metrics calculated for each raster object in 'x'.
+#' @param class raster cell values (usually binary) indicating the focal class.  Default value is 1.
+#' @export
+
+lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F, class=1){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
   landscapeAnalysis:::include('SDMTools')
@@ -150,6 +131,8 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
   if(class(x) != "list") { cat(" -- error: x= object should be a list() of rasters, as returned by subsampleSurface().\n"); stop(); }
 
   # sanity check our buffer raster surfaces for valid data before passing to PatchStats and ClassStats
+  # we will not attempt calculations on a raster surface containing only NA values -- this causes
+  # problems for 'SDMTools'
   naCheck <- function(x){ sum(values(is.na(x))) == ncell(x) }
     allNa <- unlist(lapply(x, naCheck))
 
@@ -170,9 +153,10 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
 
   # parse out the requested metrics as vectors and return to user, if requested
   if(!is.null(metric)) {
-    t <- lapply(as.list(metric), FUN=landscapeAnalysis:::metricsListToVector, x=t)
+    t <- lapply(as.list(metric), FUN=landscapeAnalysis:::metricsListToVector, x=t, class=class)
       t <- data.frame(do.call(cbind,t))
         names(t) <- metric
+          # back-fill NA rasters with zero values for our focal metric(s)
           t <- cbind(id=which(as.logical(!allNa)),t)
           t_na <- data.frame(matrix(ncol=(length(metric)+1),rep(0,sum(allNa)*(length(metric)+1))))
             names(t_na) <- names(t)
@@ -185,12 +169,10 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
    return(t)
 }
 
-#
-# lExtract()
-# takes spatial features (e.g., SpatialPoints) from y= and extracts across a list of raster scenes specified by X=
-# handy for extracting data across the spatial extent of scenes without having to mosaic the rasters into a single surface.
-#
-
+#'
+#' takes spatial features (e.g., SpatialPoints) from y= and extracts across a list of raster scenes specified by X=
+#' handy for extracting data across the spatial extent of scenes without having to mosaic the rasters into a single surface.
+#' @export
 lExtract <- function(X=NULL, y=NULL, fun=mean){
   output <- NULL    # we don't know how many points will actually overlap our surface -- will assign output values dynamically
   y$id <- 1:nrow(y) # order our initial point sample by id, so that we can sort effectively later
@@ -238,7 +220,7 @@ metricsListToVector <- function(x,metric="total.area",class=1) {
   # parse patch stats
   p <- lapply(x[[2]],FUN=parseListByMetric)
   # bind all of our patch/class metrics into a matrix and return only those metrics
-  # that have at least one valid value 
+  # that have at least one valid value
   out <- cbind(unlist(o),unlist(p))
     return(out[,apply(out,2,sum,na.rm=T)>0])
 }
