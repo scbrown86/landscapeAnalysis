@@ -68,7 +68,7 @@ subsampleSurface <- function(x=NULL, pts=NULL, n=100, type='random', width=NULL,
     stop();
   }
   # convert to a list
-  out <- list(); 
+  out <- list();
     for(i in 1:length(s)){ out[[length(out)+1]] <- s[i,] }
       s <- out; rm(out);
   # convert points to buffers and mask as needed across each buffered point
@@ -145,7 +145,7 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
 lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
-  require(SDMTools)
+  landscapeAnalysis:::include('SDMTools')
   # sanity checks
   if(class(x) != "list") { cat(" -- error: x= object should be a list() of rasters, as returned by subsampleSurface().\n"); stop(); }
 
@@ -170,7 +170,7 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F){
 
   # parse out the requested metrics as vectors and return to user, if requested
   if(!is.null(metric)) {
-    t <- lapply(as.list(metric), FUN=metricsListToVector, x=t)
+    t <- lapply(as.list(metric), FUN=landscapeAnalysis:::metricsListToVector, x=t)
       t <- data.frame(do.call(cbind,t))
         names(t) <- metric
           t <- cbind(id=which(as.logical(!allNa)),t)
@@ -221,13 +221,24 @@ lExtract <- function(X=NULL, y=NULL, fun=mean){
   # return out output points, sorted by initial $id
   return(output[order(output$id),])
 }
-
-#
-# metricsListToVector()
-# parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
-#
-metricsListToVector <- function(x,metric="total.area") { 
-  ret <- as.vector(unlist(x)[grepl(names(unlist(x)),pattern=metric)])
-    ret[is.na(ret)] <- 0;
-      return(ret);
+#' Internal (hidden) function that parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
+#'
+metricsListToVector <- function(x,metric="total.area",class=1) {
+  # parse the results of a ClassStat/PatchStat list-of-lists
+  parseListByMetric <- function(y){
+    res <- y[y$class == class,grepl(names(y),pattern=paste(metric,collapse="|",sep=""))];
+      if(length(res)==0){
+        return(NA);
+      } else {
+        return(res);
+      }
+  }
+  # parse class stats
+  o <-lapply(x[[1]],FUN=parseListByMetric)
+  # parse patch stats
+  p <- lapply(x[[2]],FUN=parseListByMetric)
+  # bind all of our patch/class metrics into a matrix and return only those metrics
+  # that have at least one valid value 
+  out <- cbind(unlist(o),unlist(p))
+    return(out[,apply(out,2,sum,na.rm=T)>0])
 }
