@@ -7,7 +7,7 @@ You can either return the KNN index or some statistic (e.g., mean) specified by 
 I have added multi-core support and use the gdal backend by default for this analysis. It's much faster than doing it in pure 'R'.}
 \usage{
 calcPatchIsolation(r, fun = NULL, k = 1, method = "gdal",
-  from = "edges", parallel = FALSE)
+  from = "centroid", parallel = FALSE)
 }
 \arguments{
 \item{fun}{a function that is applied to all KNN distances (i.e., for calculating mean/median/mode distances).}

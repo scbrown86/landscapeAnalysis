@@ -83,7 +83,7 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 #'        default is 'edges'.
 #' @param parallel TRUE/FALSE specifying whether to parallelize our vectorization / KNN operations.
 #' @export
-calcPatchIsolation <- function(r, fun=NULL, k=1, method='gdal',from='edges',parallel=FALSE){
+calcPatchIsolation <- function(r, fun=NULL, k=1, method='gdal',from='centroid',parallel=FALSE){
   landscapeAnalysis:::include('raster');
   landscapeAnalysis:::include('sp');
   landscapeAnalysis:::include('rgeos');
@@ -101,7 +101,8 @@ calcPatchIsolation <- function(r, fun=NULL, k=1, method='gdal',from='edges',para
   na_values <- as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
   if(sum(na_values)>0){
     r[na_values] <- r[which(!na_values)[1]] # overwrite our NA values with something valid
-      r <- lapply(X=as.list(r),FUN=sp::coordinates)
+    # sp::coordinates will return the centroids of each polygon feature (patch); validated against rgeos::gCentroid
+    r <- lapply(X=as.list(r),FUN=sp::coordinates)
   } else {
     r <- lapply(X=as.list(r),FUN=sp::coordinates)
   }
