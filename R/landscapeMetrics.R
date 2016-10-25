@@ -79,9 +79,11 @@ lReclass <- function(x=NULL, inValues=NULL, nomatch=NA) lapply(lapply(x,FUN=rast
 #' @param fun a function that is applied to all KNN distances (i.e., for calculating mean/median/mode distances).
 #' @param k the K (e.g., 1,2,3) value used for our K nearest-neighbor calculation.
 #' @param method string specifying whether 'gdal' or 'R' is used to vectorize our raster patches for the KNN calculation.
+#' @param from string specifying whether to calculate patch issolation distances from the 'edges' (i.e., minimum distance) or patch 'centroid'.
+#'        default is 'edges'.
 #' @param parallel TRUE/FALSE specifying whether to parallelize our vectorization / KNN operations.
 #' @export
-calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
+calcPatchIsolation <- function(r, fun=NULL, k=1, method='gdal',from='edges',parallel=FALSE){
   landscapeAnalysis:::include('raster');
   landscapeAnalysis:::include('sp');
   landscapeAnalysis:::include('rgeos');
@@ -99,30 +101,44 @@ calcPatchIsolation <- function(r, fun=NA, k=1, method='gdal', parallel=FALSE){
   na_values <- as.vector(unlist(lapply(X=as.list(r),FUN=is.na)))
   if(sum(na_values)>0){
     r[na_values] <- r[which(!na_values)[1]] # overwrite our NA values with something valid
-      r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
+      r <- lapply(X=as.list(r),FUN=sp::coordinates)
   } else {
-    r <- lapply(X=as.list(r),FUN=getSpPPolygonsLabptSlots)
+    r <- lapply(X=as.list(r),FUN=sp::coordinates)
   }
-  # do our NN assessment
-  d <- function(x,na.rm=F){ o<-try(FNN::knn.dist(x,k=k)); if(class(o) != "try-error") { x <- o; } else { x <- NA }; return(x)}
+  # do our NN assessment, pre-checking for empty (or single) points in matrices
+  d <- function(x,na.rm=F){
+    if(nrow(x)>k){ # are there at-least k observations to inform our KNN?
+      o <- suppressMessages(try(FNN::knn.dist(x,k=k)));
+      if(class(o) != "try-error") {
+        x <- o;
+      } else {
+        x <- NA
+      }
+    } else {
+      x <- NA
+    }
+    return(x)
+  }
   r <- lapply(as.list(r),FUN=d);rm(d);
-    r <- lapply(as.list(r), FUN=ifelse(is.na(fun),mean,match.fun(fun)))
-      r[na_values] <- NA # restore our NA values
+    if(is.null(fun)){
+      r <- lapply(r,FUN=mean)
+    } else {
+      r <- lapply(r,FUN=match.fun(fun))
+    }
+  r[na_values] <- NA # restore our NA values
   # clean-up
   if(parallel) stopCluster(cl);
   # return the issolation metric for each raster as a vector
   return(as.vector(unlist(r)))
 }
 
-
 #' a wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape
-#' metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the SDMTools package.
+#' metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the 'SDMTools' package.
 #'
 #' @param x list object containing raster(s) that will be passed to 'SDMTools' to calculate class/patch statistics.
 #' @param metric a vector containing the target class/patch metrics calculated for each raster object in 'x'.
 #' @param class raster cell values (usually binary) indicating the focal class.  Default value is 1.
 #' @export
-
 lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F, class=1){
   if(DEBUG){ t1 <- Sys.time(); }
   # default includes
@@ -169,14 +185,15 @@ lCalculateLandscapeMetrics <- function(x=NULL, metric=NULL, DEBUG=F, class=1){
    return(t)
 }
 
-#'
 #' takes spatial features (e.g., SpatialPoints) from y= and extracts across a list of raster scenes specified by X=
-#' handy for extracting data across the spatial extent of scenes without having to mosaic the rasters into a single surface.
+#' handy for extracting data across the spatial extent of rasters without having to mosaic and create a 'stack' object.
+#' @param X list of rasters
+#' @param y Spatial* object to extract across the 'X' raster series.
 #' @export
 lExtract <- function(X=NULL, y=NULL, fun=mean){
   output <- NULL    # we don't know how many points will actually overlap our surface -- will assign output values dynamically
   y$id <- 1:nrow(y) # order our initial point sample by id, so that we can sort effectively later
-  cat(" -- extracting across raster scenes: ")
+  cat(" -- extracting across raster(s): ")
   for(x in X){
     if(nrow(y)>0){ # sanity-check : prevent an attempted extraction with no points
       y <- spTransform(y, CRS(projection(x)))
@@ -203,7 +220,7 @@ lExtract <- function(X=NULL, y=NULL, fun=mean){
   # return out output points, sorted by initial $id
   return(output[order(output$id),])
 }
-#' Internal (hidden) function that parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
+#' Internal (hidden) function that parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector (or matrix, if multiple metrics are selected).
 #'
 metricsListToVector <- function(x,metric="total.area",class=1) {
   # parse the results of a ClassStat/PatchStat list-of-lists

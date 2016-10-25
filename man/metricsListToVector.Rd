@@ -2,11 +2,11 @@
 % Please edit documentation in R/landscapeMetrics.R
 \name{metricsListToVector}
 \alias{metricsListToVector}
-\title{Internal (hidden) function that parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.}
+\title{Internal (hidden) function that parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector (or matrix, if multiple metrics are selected).}
 \usage{
 metricsListToVector(x, metric = "total.area", class = 1)
 }
 \description{
-Internal (hidden) function that parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector.
+Internal (hidden) function that parses the list output from lCalculateLandscapeMetrics() by metric name, returning the results as a vector (or matrix, if multiple metrics are selected).
 }
 

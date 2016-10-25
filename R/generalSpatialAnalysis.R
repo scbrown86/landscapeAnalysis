@@ -41,17 +41,17 @@ getPythonPath <- function(){
 #' @param x GDAL tool name (e.g., gdal_proximity.py)
 getGDALtoolByName <- function(x=NULL){
   x <- tolower(x)
-    x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), 
+    x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))),
           FUN=list.files, pattern=x, full.names=T))
-          
+
   if(length(x)<1){
     warning(paste("couldn't find",x,"tool in PATH",sep=""))
     return(NULL)
   } else if(length(x)>1){
     warning(paste("multiple references to ",x," tool in PATH -- honoring first occurrence.",sep=""))
     return(x[1])
-  } 
-  
+  }
+
   return(x)
 }
 
@@ -68,7 +68,7 @@ parseLayerDsn <- function(x=NULL){
 readOGRfromPath <- function(path=NULL){
   landscapeAnalysis:::include('rgdal')
   path <- landscapeAnalysis:::parseLayerDsn(path)
-   
+
   layer <- path[1]
     dsn <- path[2]
 
@@ -88,7 +88,7 @@ rasterToPolygons <- function(r=NULL, method='gdal'){
  }
 
  if(grepl(method,pattern='gdal')){
-   r_name=deparse(substitute(r))
+   r_name="poly_segment"
      r_name=paste(r_name,sprintf("%.0f", round(as.numeric(runif(n=1,min=0,max=9999999)))),sep="_")
    raster::writeRaster(r,paste(r_name,"tif",sep="."),overwrite=T);
    cleanUp(r_name)
@@ -472,11 +472,11 @@ lMerge <- function(x, output=NULL, method="R"){
   if(length(x)<2){
     stop("x= argument should be a list or vector with a length greater than 1 for a merge operation.")
   }
-  # Default "R" method for merging 
+  # Default "R" method for merging
   if(grepl(tolower(method),pattern="r")){
     # convert a vector of filenames to a list of rasters, if the user didn't already create a list of rasters
     if(!is.list(x)) x <- lapply(as.list(x), FUN=raster)
-  
+
     master <- x[[1]]
     if(length(x) > 1){
       cat(" -- processing: ")

@@ -3,7 +3,7 @@
 \name{lCalculateLandscapeMetrics}
 \alias{lCalculateLandscapeMetrics}
 \title{a wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape
-metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the SDMTools package.}
+metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the 'SDMTools' package.}
 \usage{
 lCalculateLandscapeMetrics(x = NULL, metric = NULL, DEBUG = F,
   class = 1)
@@ -17,6 +17,6 @@ lCalculateLandscapeMetrics(x = NULL, metric = NULL, DEBUG = F,
 }
 \description{
 a wrapper function that accepts a raster list and applies landscape metrics across the list.  Code for landscape
-metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the SDMTools package.
+metrics is implemented using an approach coded by Jeremy VanDerWal (jjvanderwal@gmail.com), using the 'SDMTools' package.
 }
 

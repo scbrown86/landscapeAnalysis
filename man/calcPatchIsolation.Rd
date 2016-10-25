@@ -6,8 +6,8 @@
 You can either return the KNN index or some statistic (e.g., mean) specified by fun=.  The default action is to return the full index.
 I have added multi-core support and use the gdal backend by default for this analysis. It's much faster than doing it in pure 'R'.}
 \usage{
-calcPatchIsolation(r, fun = NA, k = 1, method = "gdal",
-  parallel = FALSE)
+calcPatchIsolation(r, fun = NULL, k = 1, method = "gdal",
+  from = "edges", parallel = FALSE)
 }
 \arguments{
 \item{fun}{a function that is applied to all KNN distances (i.e., for calculating mean/median/mode distances).}
@@ -15,6 +15,9 @@ calcPatchIsolation(r, fun = NA, k = 1, method = "gdal",
 \item{k}{the K (e.g., 1,2,3) value used for our K nearest-neighbor calculation.}
 
 \item{method}{string specifying whether 'gdal' or 'R' is used to vectorize our raster patches for the KNN calculation.}
+
+\item{from}{string specifying whether to calculate patch issolation distances from the 'edges' (i.e., minimum distance) or patch 'centroid'.
+default is 'edges'.}
 
 \item{parallel}{TRUE/FALSE specifying whether to parallelize our vectorization / KNN operations.}
 }

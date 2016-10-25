@@ -3,12 +3,17 @@
 \name{lExtract}
 \alias{lExtract}
 \title{takes spatial features (e.g., SpatialPoints) from y= and extracts across a list of raster scenes specified by X=
-handy for extracting data across the spatial extent of scenes without having to mosaic the rasters into a single surface.}
+handy for extracting data across the spatial extent of rasters without having to mosaic and create a 'stack' object.}
 \usage{
 lExtract(X = NULL, y = NULL, fun = mean)
 }
+\arguments{
+\item{X}{list of rasters}
+
+\item{y}{Spatial* object to extract across the 'X' raster series.}
+}
 \description{
 takes spatial features (e.g., SpatialPoints) from y= and extracts across a list of raster scenes specified by X=
-handy for extracting data across the spatial extent of scenes without having to mosaic the rasters into a single surface.
+handy for extracting data across the spatial extent of rasters without having to mosaic and create a 'stack' object.
 }
 
