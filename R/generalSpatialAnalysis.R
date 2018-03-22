@@ -333,31 +333,31 @@ clusterReclassify <- function(r,t=NULL, n=3){
 #
 
 snapTo <- function(x,to=NULL,method='bilinear'){
-  require(parallel)
   # set-up a cluster for parallelization
-  cl <- makeCluster((parallel::detectCores()-2))
+  cl <- parallel::makeCluster(parallel::detectCores()-2)
   # crop, reproject, and snap our raster to a resolution and projection consistent with the rest our explanatory data
-  if(grepl(tolower(class(x)),pattern="character")){ lapply(x,FUN=raster) }
-  e <- as(extent(to[[1]]),'SpatialPolygons')
-    projection(e) <- CRS(projection(to[[1]]))
+  if(grepl(tolower(class(x)),pattern="character")){ lapply(x,FUN=raster::raster) }
+  e <- as(raster::extent(to[[1]]),'SpatialPolygons')
+    raster::projection(e) <- sp::CRS(raster::projection(to[[1]]))
   if(class(x) == "list") {
-    x <- parLapply(cl,x,fun=raster::crop,extent(spTransform(e,CRS(projection(x[[1]])))))
-      x <- parLapply(cl,x,fun=raster::projectRaster,crs=CRS(projection(to[[1]])))
-    extents <- lapply(x,alignExtent,to[[1]])
-      for(i in 1:length(x)){ extent(x[[i]]) <- extents[[i]] }
+    x <- parallel::parLapply(cl,x,fun=raster::crop, raster::extent(sp::spTransform(e,sp::CRS(raster::projection(x[[1]])))))
+      x <- parallel::parLapply(cl,x,fun=raster::projectRaster,crs=sp::CRS(raster::projection(to[[1]])))
+    extents <- lapply(x,raster::alignExtent,to[[1]])
+      for(i in 1:length(x)){ raster::extent(x[[i]]) <- extents[[i]] }
     if(!is.null(method)){
-      x <- parLapply(cl,x,fun=resample,y=to[[1]],method=method)
+      x <- parallel::parLapply(cl,x,fun=raster::resample,y=to[[1]],method=method)
     }
   } else {
-    x <- raster::crop(x,extent(spTransform(e,CRS(projection(x)))))
-      x <- raster::projectRaster(x,crs=CRS(projection(to[[1]])))
-    extent <- alignExtent(x,to[[1]])
-      extent(x) <- extent
+    x <- raster::crop(x,raster::extent(sp::spTransform(e,sp::CRS(projection(x)))))
+      x <- raster::projectRaster(x,crs=sp::CRS(raster::projection(to[[1]])))
+    extent <- raster::alignExtent(x,to[[1]])
+      raster::extent(x) <- extent
     if(!is.null(method)){
       x <- raster::resample(x,y=to[[1]],method=method)
     }
   }
-  endCluster()
+  parallel::stopCluster(cl);
+  rm(cl);
   return(x)
 }
 
