@@ -332,7 +332,7 @@ clusterReclassify <- function(r,t=NULL, n=3){
 # a raster object using a template
 #
 
-snapTo <- function(x,to=NULL,names=NULL,method='bilinear'){
+snapTo <- function(x,to=NULL,method='bilinear'){
   require(parallel)
   # set-up a cluster for parallelization
   cl <- makeCluster((parallel::detectCores()-2))
