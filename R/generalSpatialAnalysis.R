@@ -111,7 +111,7 @@ rasterToPolygons <- function(r = NULL, method = "gdal") {
       ## now reads *.grd instead of *.tif, and gdal output is suppressed with "-q"
       system(paste(landscapeAnalysis:::getPythonPath(), landscapeAnalysis:::getGDALtoolByName("gdal_polygonize"), "-8", paste(r_name, "grd", sep = "."), "-f \"ESRI Shapefile\"", paste(r_name, "shp", sep = "."), "-q", sep = " "))) == 0) {
       ## read in polygon with st_read. Much quicker than rgdal.
-      if (class(try(s <- sf::st_read(".", r_name, quiet = TRUE))) != "try-error") {
+      if (class(try(s <- sf::st_read(r_name, quiet = TRUE))) != "try-error") {
         cleanUp(r_name, rmAll = T)
         return(s)
       } else {
