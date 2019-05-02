@@ -29,39 +29,42 @@ include <- function(x, from = "cran", repo = NULL) {
   }
 }
 #' built-in (hidden) function that will parse the system path for all occurrences of python and take the first occurrence as the version to use
-getPythonPath <- function() {
-  ## split on ";" instead of ":" - SCBrown 2019-05-02
-  PYTHON <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"), split = ";"))), FUN = list.files, pattern = "python", full.names = T))
+getPythonPath <- function () {
+  PYTHON <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"), split = ";"))), 
+                          FUN = list.files, pattern = "python", 
+                          full.names = TRUE))
   if (length(PYTHON) > 1) {
     warning("multiple python binaries found in PATH.  Making a guess as to the default to use.")
-    # should correspond to /usr/bin/python on nix platforms.  This probably breaks win32 compat.
-    ## If multiple version installed, grab Python3 installations - hopefully will only return 1!
-    PYTHON <- PYTHON[grep(PYTHON, pattern = "C:\\\\OSGeo4W64\\\\apps\\\\Python37\\\\python.exe" )]
+    PYTHON <- PYTHON[grep(PYTHON, pattern = "37")]
+    PYTHON <- PYTHON[grep(PYTHON, pattern = "python.exe")]
     if (length(PYTHON) > 1) {
-      stop("Multiple unique python installations found in user's PATH\n", PYTHON)
+      stop("Multiple unique python installations found in user's PATH\n", 
+           PYTHON)
     }
-    warning("Using python binary: ", PYTHON)
-  } else if (length(PYTHON) == 0) {
+    warning(paste0("Using python binary: ", PYTHON))
+  }
+  else if (length(PYTHON) == 0) {
     stop("couldn't find a python executable in the user's PATH.")
   }
   return(PYTHON)
 }
 #' built-in (hidden) function that will accept a GDAL tool by name and attempt to find it within the user's current PATH
 #' @param x GDAL tool name (e.g., gdal_proximity.py)
-getGDALtoolByName <- function(x = NULL) {
+getGDALtoolByName <- function (x = NULL) {
+  i <- x
   x <- tolower(x)
-  ## split on ";" instead of ":"
-  x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"), split = ";"))),
-    FUN = list.files, pattern = x, full.names = T
-  ))
-
+  x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"), 
+                                             split = ";"))), 
+                     FUN = list.files, full.names = TRUE))
+  x <- x[grep(".py$", x)]
+  x <- x[grep("polygonize.py", x)]
   if (length(x) < 1) {
     warning(paste("couldn't find", x, "tool in PATH", sep = ""))
     return(NULL)
-  } else if (length(x) > 1) {
-    warning("multiple references to ", x, " tool in PATH -- honoring first occurrence.")
-    ## return first position that matches "_polygonize.py"
-    return(x[grep(pattern = "_polygonize.py", x)[1]])
+  }
+  else if (length(x) > 1) {
+    warning("multiple references to ", i, " tool in PATH -- honoring first occurrence.")
+    return(x[1])
   }
   return(x)
 }
@@ -79,31 +82,36 @@ parseLayerDsn <- function(x = NULL) {
 readOGRfromPath <- function(path = NULL) {
   landscapeAnalysis:::include("rgdal")
   path <- landscapeAnalysis:::parseLayerDsn(path)
-
   layer <- path[1]
   dsn <- path[2]
-
   return(rgdal::readOGR(dsn, layer, verbose = F))
 }
 #' convert a raster to polygons using either 'R' or 'GDAL'.  GDAL is the (faster) default selection
 #' @param r a raster object that we will convert to a polygon
 #' @export
+## Edited to use sf::st_read instead of rgdal::readOGR(). Much faster now.
 rasterToPolygons <- function(r = NULL, method = "gdal") {
+  require(sf)
   cleanUp <- function(n, rmAll = F) {
     if (rmAll) {
-      unlink(paste(n, c("shp", "xml", "shx", "prj", "dbf", "tif"), sep = "."), force = T, recursive = T)
+      unlink(paste(n, c("shp", "xml", "shx", "prj", "dbf", "tif"), sep = "."), 
+             force = T, recursive = T)
     } else {
-      unlink(paste(n, c("shp", "xml", "shx", "prj", "dbf"), sep = "."), force = T, recursive = T)
+      unlink(paste(n, c("shp", "xml", "shx", "prj", "dbf"), sep = "."), 
+             force = T, recursive = T)
     }
   }
-
   if (grepl(method, pattern = "gdal")) {
     r_name <- "poly_segment"
     r_name <- paste(r_name, sprintf("%.0f", round(as.numeric(runif(n = 1, min = 0, max = 9999999)))), sep = "_")
-    raster::writeRaster(r, paste(r_name, "tif", sep = "."), overwrite = T)
+    ## writing to grd is quicker than geoTiff
+    raster::writeRaster(r, paste(r_name, "grd", sep = "."), overwrite = TRUE)
     cleanUp(r_name)
-    if (try(system(paste(landscapeAnalysis:::getPythonPath(), landscapeAnalysis:::getGDALtoolByName("gdal_polygonize"), "-8", paste(r_name, "tif", sep = "."), "-f \"ESRI Shapefile\"", paste(r_name, "shp", sep = "."), sep = " "))) == 0) {
-      if (class(try(s <- rgdal::readOGR(".", r_name, verbose = F))) != "try-error") {
+    if (try(
+      ## now reads *.grd instead of *.tif, and gdal output is suppressed with "-q"
+      system(paste(landscapeAnalysis:::getPythonPath(), landscapeAnalysis:::getGDALtoolByName("gdal_polygonize"), "-8", paste(r_name, "grd", sep = "."), "-f \"ESRI Shapefile\"", paste(r_name, "shp", sep = "."), "-q", sep = " "))) == 0) {
+      ## read in polygon with st_read. Much quicker than rgdal.
+      if (class(try(s <- sf::st_read(".", r_name, quiet = TRUE))) != "try-error") {
         cleanUp(r_name, rmAll = T)
         return(s)
       } else {
@@ -118,6 +126,7 @@ rasterToPolygons <- function(r = NULL, method = "gdal") {
     return(raster::rasterToPolygons(r, dissolve = T, progress = "text"))
   }
 }
+
 #' extract quantiles from a continuous raster surface as spatial polygons using GDAL
 #' @export
 extractDensities <- function(x, s = 5, d = 15, p = c(0.5, 0.9)) {
