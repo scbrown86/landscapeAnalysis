@@ -1,4 +1,6 @@
 #
+# Edited by Stuart Brown - 2019-05-02
+# Updated get Python path
 # kyle.taylor@pljv.org
 # GIS Programmer/Analyst, Playa Lakes Joint Venture
 #
@@ -28,10 +30,17 @@ include <- function(x,from="cran",repo=NULL){
 }
 #' built-in (hidden) function that will parse the system path for all occurrences of python and take the first occurrence as the version to use
 getPythonPath <- function(){
-  PYTHON <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=":"))), FUN=list.files, pattern="python", full.names=T))
+  ## split on ";" instead of ":" - SCBrown 2019-05-02
+  PYTHON <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"),split=";"))), FUN=list.files, pattern="python", full.names=T))
   if(length(PYTHON)>1){
     warning("multiple python binaries found in PATH.  Making a guess as to the default to use.")
-    PYTHON <- PYTHON[grep(PYTHON, pattern="\\/python$")] # should correspond to /usr/bin/python on nix platforms.  This probably breaks win32 compat.
+    # should correspond to /usr/bin/python on nix platforms.  This probably breaks win32 compat.
+    ## If multiple version installed, grab the unique installations - hopefully will only return 1!
+    PYTHON <- unique(PYTHON[grep(PYTHON, pattern = "\\/python.exe$")])
+    if (length(PYTHON) > 1) {
+      stop("Multiple unique python installations found in user's PATH\n", PYTHON)
+      }
+    warning("Using python binary: ", PYTHON)
   } else if(length(PYTHON) == 0){
     stop("couldn't find a python executable in the user's PATH.")
   }
