@@ -35,8 +35,8 @@ getPythonPath <- function() {
   if (length(PYTHON) > 1) {
     warning("multiple python binaries found in PATH.  Making a guess as to the default to use.")
     # should correspond to /usr/bin/python on nix platforms.  This probably breaks win32 compat.
-    ## If multiple version installed, grab the unique installations - hopefully will only return 1!
-    PYTHON <- unique(PYTHON[grep(PYTHON, pattern = "\\/python.exe$")])
+    ## If multiple version installed, grab Python3 installations - hopefully will only return 1!
+    PYTHON <- PYTHON[grep(PYTHON, pattern = "C:\\\\OSGeo4W64\\\\apps\\\\Python37\\\\python.exe" )]
     if (length(PYTHON) > 1) {
       stop("Multiple unique python installations found in user's PATH\n", PYTHON)
     }
@@ -50,7 +50,8 @@ getPythonPath <- function() {
 #' @param x GDAL tool name (e.g., gdal_proximity.py)
 getGDALtoolByName <- function(x = NULL) {
   x <- tolower(x)
-  x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"), split = ":"))),
+  ## split on ";" instead of ":"
+  x <- unlist(lapply(as.list(unlist(strsplit(Sys.getenv("PATH"), split = ";"))),
     FUN = list.files, pattern = x, full.names = T
   ))
 
@@ -58,10 +59,10 @@ getGDALtoolByName <- function(x = NULL) {
     warning(paste("couldn't find", x, "tool in PATH", sep = ""))
     return(NULL)
   } else if (length(x) > 1) {
-    warning(paste("multiple references to ", x, " tool in PATH -- honoring first occurrence.", sep = ""))
-    return(x[1])
+    warning("multiple references to ", x, " tool in PATH -- honoring first occurrence.")
+    ## return first position that matches "_polygonize.py"
+    return(x[grep(pattern = "_polygonize.py", x)[1]])
   }
-
   return(x)
 }
 
