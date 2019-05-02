@@ -6,7 +6,7 @@ The code is dynamic (i.e., immature).  It needs documentation, optimization, and
 # installation
 ```
 library("devtools")
-install_github("ktaylora/landscapeAnalysis")
+install_github("scbrown86/landscapeAnalysis")
 ```
 
 # usage
